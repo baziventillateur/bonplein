@@ -6,7 +6,7 @@ Un bouton « Classement France » ouvre le podium national : les 3 villes les mo
 
 L'application se géolocalise à l'ouverture. Elle est gamifiée : XP, niveaux, badges (dont « Tour de France »), podiums et défi de la semaine. La progression reste sur l'appareil.
 
-**Site :** https://baziventillateur.github.io/bonplein/
+**Site :** https://bonplein.paceapp.fr/
 
 ## Données
 
