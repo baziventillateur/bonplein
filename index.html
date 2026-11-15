@@ -1,0 +1,1379 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bonplein : le plein au meilleur prix</title>
+<meta name="description" content="Les stations-service autour de vous, du moins cher au plus cher, avec les ruptures et les horaires. Gagnez des XP à chaque plein malin.">
+<meta name="theme-color" content="#1D2731">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bitume:#1D2731;
+  --beton:#EDF0EF;
+  --surface:#FFFFFF;
+  --ink:#1D2731;
+  --muted:#5D6A74;
+  --line:#D6DCDF;
+  --totem:#F4C542;
+  --vert:#0E8459;
+  --rouge:#B83C2A;
+  --bleu:#2F64A8;
+  --r-s:6px;
+  --r-m:9px;
+  --sans:"Barlow",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --cond:"Barlow Condensed","Barlow",system-ui,-apple-system,"Arial Narrow",sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --beton:#11171C;
+    --surface:#1A2229;
+    --ink:#E6EBED;
+    --muted:#9AA7B0;
+    --line:#2C3842;
+    --vert:#3DBB86;
+    --rouge:#F07A63;
+    --bleu:#7FA8E0;
+    color-scheme:dark;
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;font-size:15px}
+@media (max-width:360px){html{font-size:14px}}
+body{margin:0;background:var(--beton);color:var(--ink);font:400 1rem/1.35 var(--sans);font-variant-numeric:tabular-nums}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+a{color:inherit}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--totem);outline-offset:2px}
+.wrap{max-width:640px;margin:0 auto}
+
+/* En-tête */
+.top{background:var(--bitume);color:#F2F5F6;padding:10px 10px 10px}
+.top h1{font:700 1.5rem/1.1 var(--cond);margin:0 0 8px}
+.search{display:grid;grid-template-columns:1fr 40px 40px;gap:6px}
+.field{position:relative}
+.search input{width:100%;height:40px;border-radius:var(--r-s);border:0;padding:0 10px;background:#fff;color:#1D2731;font-size:1rem}
+.search input::placeholder{color:#7C8890}
+.ibtn{height:40px;width:40px;border-radius:var(--r-s);border:0;display:grid;place-items:center;cursor:pointer;padding:0}
+.ibtn svg{width:19px;height:19px}
+.ibtn.primary{background:var(--totem);color:#1D2731}
+.ibtn.ghost{background:transparent;color:#E8EEF0;border:1.5px solid #51606C}
+.ibtn:disabled{opacity:.6;cursor:progress}
+.suggest{position:absolute;z-index:20;left:0;right:-92px;top:calc(100% + 4px);margin:0;padding:3px;list-style:none;background:var(--surface);color:var(--ink);border-radius:var(--r-s);box-shadow:0 10px 30px rgba(10,20,30,.25)}
+.suggest li{padding:8px 10px;border-radius:4px;cursor:pointer;font-size:.9375rem}
+.suggest li small{display:block;color:var(--muted);font-size:.75rem}
+.suggest li[aria-selected="true"],.suggest li:hover{background:var(--beton)}
+
+main{padding:0 10px 24px}
+
+/* Réglages */
+.controls{padding:10px 0 0}
+.fuels{display:flex;gap:5px;overflow-x:auto;padding:1px 1px 8px;margin:0 -1px;scrollbar-width:none}
+.fuels::-webkit-scrollbar{display:none}
+.fuel{flex:0 0 auto;display:flex;align-items:center;gap:6px;height:34px;padding:0 10px 0 5px;border-radius:999px;border:1.5px solid var(--line);background:var(--surface);cursor:pointer}
+.fuel .fname{font-size:.8125rem;font-weight:600;white-space:nowrap}
+.badge{--b:var(--ink);display:grid;place-items:center;width:24px;height:24px;border:2px solid var(--b);font:700 .5625rem/1 var(--sans);color:var(--b);background:var(--surface);flex:0 0 auto}
+.badge.circle{border-radius:50%}
+.badge.square{border-radius:2px}
+.badge.diamond{width:18px;height:18px;transform:rotate(45deg);margin:3px;border-radius:2px}
+.badge.diamond span{transform:rotate(-45deg);font-size:.5rem}
+.fuel[aria-checked="true"]{border-color:var(--ink);background:var(--ink);color:var(--beton)}
+.fuel[aria-checked="true"] .badge{--b:var(--beton);background:var(--ink)}
+
+.row2{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px}
+.seg{display:inline-flex;border:1.5px solid var(--line);border-radius:var(--r-s);overflow:hidden;background:var(--surface)}
+.seg button{border:0;background:transparent;padding:0 9px;height:30px;cursor:pointer;font-weight:500;font-size:.8125rem;min-width:42px}
+.seg button+button{border-left:1.5px solid var(--line)}
+.seg button[aria-checked="true"]{background:var(--ink);color:var(--beton);font-weight:600}
+.tank{display:inline-flex;align-items:center;gap:5px;font-weight:500;font-size:.8125rem}
+.tank input{width:46px;height:30px;border:1.5px solid var(--line);border-radius:var(--r-s);background:var(--surface);text-align:center;font-weight:600;font-size:.875rem}
+.toggles{display:flex;flex-wrap:wrap;gap:5px;margin:7px 0 0}
+.chipt{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 9px 0 7px;border:1.5px solid var(--line);border-radius:999px;background:var(--surface);cursor:pointer;font-size:.8125rem;font-weight:500}
+.chipt input{width:15px;height:15px;margin:0;accent-color:var(--bitume)}
+@media (prefers-color-scheme:dark){.chipt input{accent-color:var(--totem)}}
+
+/* Statut */
+.status{margin:10px 0 0;color:var(--muted);font-size:.875rem}
+.status:empty{display:none}
+.err{border-left:3px solid var(--rouge);background:var(--surface);color:var(--ink);padding:8px 10px;border-radius:0 var(--r-s) var(--r-s) 0}
+.err strong{display:block;margin-bottom:1px}
+.loading{display:flex;align-items:center;gap:8px}
+.spin{width:15px;height:15px;border:2px solid var(--line);border-top-color:var(--ink);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation:none}}
+
+/* Le totem : meilleur prix */
+.totem{margin:10px 0 0;background:var(--bitume);color:#F2F5F6;border-radius:var(--r-m);padding:10px 12px 12px;position:relative;overflow:hidden}
+.totem::after{content:"";position:absolute;inset:auto 0 0 0;height:4px;background:var(--totem)}
+.totem-grid{display:grid;grid-template-columns:auto 1fr;gap:2px 14px;align-items:end}
+.totem h2{grid-column:1 / -1;font:600 .875rem/1.25 var(--sans);margin:0;color:#DCE3E7}
+.totem .price{font:700 3.5rem/0.9 var(--cond);color:var(--totem);letter-spacing:-.01em;margin:4px 0 0;display:flex;align-items:flex-start}
+.totem .price sup{font-size:.5em;line-height:1;margin:.1em 0 0 .03em}
+.totem .price .unit{font:600 .8125rem/1 var(--sans);color:#B9C4CB;align-self:flex-end;margin:0 0 .45em .35em}
+.totem .addr{margin:0 0 2px;font-weight:600;font-size:.9375rem;line-height:1.25}
+.totem .addr span{display:block;font-weight:400;color:#B9C4CB;font-size:.8125rem}
+.totem .meta{display:flex;flex-wrap:wrap;gap:2px 10px;margin:8px 0 0;font-size:.8125rem;color:#B9C4CB}
+.totem .calc{margin:6px 0 0;color:#DCE3E7;font-size:.875rem}
+.totem .calc strong{color:#fff}
+.go{display:flex;flex-wrap:wrap;gap:6px;margin:9px 0 2px}
+.go a{display:inline-flex;align-items:center;height:32px;padding:0 11px;border-radius:var(--r-s);text-decoration:none;font-weight:600;font-size:.8125rem}
+.totem .go a{background:#F2F5F6;color:#1D2731}
+.totem .go a.alt{background:transparent;color:#F2F5F6;border:1.5px solid #51606C}
+
+.st{font-weight:600;font-size:.8125rem}
+.st.open{color:var(--vert)}
+.st.auto{color:var(--bleu)}
+.st.closed{color:var(--rouge)}
+.st.unknown{color:var(--muted)}
+.totem .st.open{color:#6FDCA9}
+.totem .st.auto{color:#9CC2F2}
+.totem .st.closed{color:#FF9C88}
+.totem .st.unknown{color:#B9C4CB}
+
+.summary{margin:9px 1px 0;font-size:.8125rem;color:var(--ink)}
+.summary .hid{color:var(--muted)}
+.linkbtn{border:0;background:none;padding:0;text-decoration:underline;text-underline-offset:2px;cursor:pointer;color:var(--ink);font-weight:600;font-size:inherit}
+
+.sechead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:14px 0 5px;flex-wrap:wrap}
+.sechead h3{margin:0;font:700 1rem/1.2 var(--sans)}
+.sechead .seg button{height:28px;font-size:.75rem;padding:0 8px}
+.sechead .hint{font-size:.75rem;color:var(--muted)}
+
+/* Comparatif par ville */
+.clist{list-style:none;margin:0;padding:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-m);overflow:hidden}
+.clist>li+li{border-top:1px solid var(--line)}
+.crow{width:100%;display:grid;grid-template-columns:1fr auto;gap:0 10px;align-items:baseline;text-align:left;border:0;background:transparent;padding:7px 12px;cursor:pointer}
+.crow[aria-pressed="true"]{background:var(--beton);box-shadow:inset 3px 0 0 var(--ink)}
+.c-name{font-weight:700;font-size:.9375rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.c-min{font:700 1.25rem/1.1 var(--cond);text-align:right}
+.c-min sup{font-size:.55em}
+.c-meta{font-size:.75rem;color:var(--muted)}
+.c-delta{font-size:.75rem;font-weight:600;color:var(--muted);text-align:right;white-space:nowrap}
+.c-delta.best{color:var(--vert)}
+.cmore{margin:6px 1px 0;font-size:.8125rem}
+
+/* Liste des stations */
+.list{list-style:none;margin:0;padding:0;background:var(--surface);border-radius:var(--r-m);border:1px solid var(--line);overflow:hidden}
+.list>li+li{border-top:1px solid var(--line)}
+.row-main{width:100%;display:grid;grid-template-columns:66px 1fr;gap:10px;align-items:start;text-align:left;border:0;background:transparent;padding:8px 12px;cursor:pointer}
+.r-rank{font:600 .6875rem/1 var(--sans);color:var(--muted);display:block;margin-bottom:2px}
+.r-price .p{display:block;font:700 1.375rem/1 var(--cond)}
+.r-price .p sup{font-size:.55em}
+.gauge{display:block;position:relative;height:3px;margin-top:5px;border-radius:2px;background:linear-gradient(90deg,var(--vert),#D9A21B 55%,var(--rouge));opacity:.85}
+.gauge i{position:absolute;top:50%;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;background:var(--surface);border:2px solid var(--ink)}
+.r-delta{display:block;margin-top:4px;font-weight:600;font-size:.6875rem;color:var(--muted);white-space:nowrap}
+.r-delta.best{color:var(--vert)}
+.r-info{min-width:0;display:flex;flex-direction:column}
+.r-addr{font-weight:600;font-size:.9375rem;line-height:1.25;overflow-wrap:anywhere}
+.r-meta{color:var(--muted);font-size:.8125rem}
+.stale{color:var(--rouge);font-weight:600}
+
+.row-detail{padding:0 12px 10px 88px}
+@media (max-width:420px){.row-detail{padding-left:12px}}
+.prices{width:100%;border-collapse:collapse;font-size:.8125rem;margin:0 0 6px}
+.prices td{padding:3px 0;border-bottom:1px solid var(--line)}
+.prices td:nth-child(2){text-align:right;font-weight:600;padding:3px 8px}
+.prices td:nth-child(3){text-align:right;color:var(--muted);font-size:.75rem;white-space:nowrap}
+.prices tr.sel td{font-weight:700}
+.prices .ko{color:var(--rouge);font-weight:600}
+.detail-line{margin:3px 0;font-size:.8125rem;color:var(--muted)}
+.detail-line b{color:var(--ink);font-weight:600}
+.row-detail .go a{background:var(--ink);color:var(--beton)}
+.row-detail .go a.alt{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+
+/* Ruptures */
+.rupt{margin:12px 0 0;background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--rouge);border-radius:var(--r-s)}
+.rupt summary{padding:8px 10px;cursor:pointer;font-weight:600;font-size:.875rem}
+.rupt ul{list-style:none;margin:0;padding:0 10px 6px}
+.rupt li{padding:6px 0;border-top:1px solid var(--line);font-size:.8125rem}
+.rupt li span{display:block;color:var(--muted);font-size:.75rem}
+
+.empty{margin:12px 0 0;padding:12px;background:var(--surface);border:1px dashed var(--line);border-radius:var(--r-m);font-size:.875rem}
+.empty p{margin:0 0 8px}
+.empty p:last-child{margin:0}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chips button{border:1.5px solid var(--line);background:var(--beton);border-radius:var(--r-s);padding:0 10px;height:30px;cursor:pointer;font-weight:600;font-size:.8125rem}
+
+.fetched{display:flex;align-items:center;gap:8px;margin:10px 1px 0;color:var(--muted);font-size:.75rem;flex-wrap:wrap}
+.fetched button{border:1.5px solid var(--line);background:var(--surface);border-radius:var(--r-s);padding:0 10px;height:28px;cursor:pointer;font-weight:600;color:var(--ink);font-size:.75rem}
+
+footer{padding:4px 10px 22px;color:var(--muted);font-size:.6875rem;line-height:1.4}
+footer p{margin:.3rem 0}
+
+[hidden]{display:none!important}
+.plus{color:var(--vert)}
+.minus{color:var(--rouge)}
+
+/* Jeu : en-tête */
+.titlebar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 8px}
+.titlebar h1{margin:0}
+.gamechip{flex:0 0 auto;display:flex;align-items:center;gap:7px;background:#2A3743;border:0;border-radius:999px;padding:3px 10px 3px 3px;color:#F2F5F6;cursor:pointer}
+.lv{width:26px;height:26px;border-radius:50%;background:var(--totem);color:#1D2731;font:700 .9375rem/1 var(--cond);display:grid;place-items:center;flex:0 0 auto}
+.xpw{display:flex;flex-direction:column;gap:3px;font-size:.6875rem;font-weight:600;text-align:left}
+.xpbar{display:block;width:60px;height:4px;border-radius:2px;background:#46535E;overflow:hidden}
+.xpbar i{display:block;height:100%;background:var(--totem)}
+
+.note{border-left:3px solid var(--bleu);background:var(--surface);color:var(--ink);padding:8px 10px;border-radius:0 var(--r-s) var(--r-s) 0}
+.note strong{display:block;margin-bottom:1px}
+
+/* Podium */
+.medal{display:inline-grid;place-items:center;width:17px;height:17px;border-radius:50%;font:700 .6875rem/1 var(--sans);color:#1D2731;vertical-align:-3px;margin-right:4px;box-shadow:inset 0 -2px 0 rgba(0,0,0,.18)}
+.m1{background:#F4C542}
+.m2{background:#C5CED4}
+.m3{background:#DDA474}
+
+.btn-plein{display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 6px 0 11px;border:0;border-radius:var(--r-s);background:var(--totem);color:#1D2731;font-weight:700;font-size:.8125rem;cursor:pointer}
+.totem .btn-plein{flex:1 1 100%;justify-content:center;height:36px;font-size:.875rem}
+.btn-plein .xp{background:#1D2731;color:var(--totem);border-radius:999px;padding:3px 7px;font-size:.6875rem}
+
+/* Toast */
+#toast{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));transform:translate(-50%,16px);opacity:0;z-index:60;background:var(--bitume);color:#F2F5F6;border-radius:999px;padding:9px 16px;font-size:.875rem;box-shadow:0 8px 24px rgba(0,0,0,.3);transition:opacity .2s,transform .2s;display:flex;gap:8px;align-items:center;white-space:nowrap;max-width:calc(100vw - 20px)}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+#toast b{color:var(--totem)}
+
+/* Feuilles (dialogues) */
+dialog.sheet{border:0;padding:0;width:100%;max-width:520px;margin:auto auto 0;border-radius:14px 14px 0 0;background:var(--surface);color:var(--ink);max-height:90vh;overflow:auto}
+dialog.sheet::backdrop{background:rgba(10,16,22,.55)}
+dialog.sheet.center{margin:auto;border-radius:14px;max-width:340px;width:calc(100% - 28px);overflow:visible}
+@media (min-width:600px){dialog.sheet{margin:auto;border-radius:14px}}
+.sheet-in{position:relative;padding:14px 14px calc(14px + env(safe-area-inset-bottom))}
+.sheet h2{font:700 1.375rem/1.15 var(--cond);margin:0 0 8px;padding-right:36px}
+.sheet h3{font:700 .9375rem/1.2 var(--sans);margin:14px 0 6px}
+.sheet-x{position:absolute;top:10px;right:10px;width:32px;height:32px;border:0;background:var(--beton);color:var(--ink);border-radius:50%;cursor:pointer;font-size:1.25rem;line-height:1}
+.sheet-actions{display:flex;gap:8px;margin-top:14px}
+.sbtn{flex:1;height:40px;border-radius:var(--r-s);font-weight:700;cursor:pointer;border:1.5px solid var(--line);background:var(--surface);color:var(--ink)}
+.sbtn.primary{background:var(--totem);color:#1D2731;border-color:var(--totem)}
+
+.pl-st{margin:0;font-weight:600}
+.pl-st span{display:block;color:var(--muted);font-weight:400;font-size:.8125rem}
+.pl-grid{display:grid;grid-template-columns:1fr auto;gap:7px 10px;margin:12px 0 0;font-size:.875rem;align-items:center}
+.pl-grid input{width:70px;height:34px;border:1.5px solid var(--line);border-radius:var(--r-s);text-align:center;font-weight:700;background:var(--surface);justify-self:end}
+.pl-grid .v{text-align:right;font-weight:700}
+.pl-xp{margin-top:12px;padding:9px 11px;border-radius:8px;background:var(--bitume);color:#DCE3E7;font-size:.8125rem}
+.pl-xp b{color:var(--totem);font:700 1.375rem/1 var(--cond);margin-right:6px}
+
+.pf-level{display:flex;gap:12px;align-items:center}
+.lv.big{width:48px;height:48px;font-size:1.625rem}
+.pf-level>div{flex:1;min-width:0}
+.pf-level>div>b{display:block;font-size:1.0625rem}
+.pf-level>div>span{display:block;font-size:.8125rem;color:var(--muted)}
+.xpbar.wide{width:100%;height:6px;margin-top:6px;background:var(--line)}
+.pf-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:12px 0 0}
+.pf-stats div{background:var(--beton);border-radius:8px;padding:8px}
+.pf-stats b{display:block;font:700 1.25rem/1.1 var(--cond)}
+.pf-stats span{font-size:.75rem;color:var(--muted)}
+.pf-chal{margin:10px 0 0;padding:8px 10px;border:1.5px dashed var(--line);border-radius:8px;font-size:.8125rem;display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center}
+.pf-chal b,.pf-chal span{grid-column:1}
+.pf-chal em{grid-row:1 / span 2;grid-column:2;font-style:normal;font-weight:700;color:var(--muted)}
+.pf-chal.done{border-style:solid;border-color:var(--vert)}
+.pf-chal.done em{color:var(--vert)}
+.badges{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:6px}
+.bdg{padding:7px 8px;border-radius:8px;background:var(--beton);font-size:.75rem;border:1.5px solid transparent}
+.bdg:not(.on){opacity:.62}
+.bdg.on{background:var(--surface);border-color:var(--totem)}
+.bdg .bi{font-size:1.25rem;display:block;line-height:1.2}
+.bdg.off .bi{filter:grayscale(1)}
+.bdg b{display:block;font-size:.8125rem}
+.bdg small{color:var(--muted)}
+.hist{list-style:none;margin:0;padding:0;font-size:.8125rem}
+.hist li{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-top:1px solid var(--line)}
+.hist li.none{color:var(--muted);justify-content:flex-start}
+.pf-how{font-size:.75rem;color:var(--muted);margin:12px 0 8px}
+.danger{color:var(--rouge)}
+
+/* Célébration */
+.cel{text-align:center}
+.cel h2{padding:0}
+.cel-item{display:flex;gap:10px;align-items:center;text-align:left;padding:9px 0;border-top:1px solid var(--line)}
+.cel-ic{flex:0 0 auto;width:44px;height:44px;border-radius:50%;background:var(--totem);color:#1D2731;display:grid;place-items:center;font:700 1.375rem/1 var(--cond)}
+.cel-ic.emo{font:1.625rem/1 "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",system-ui,sans-serif}
+.cel-item b{display:block}
+.cel-item span{font-size:.8125rem;color:var(--muted)}
+#confetti{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:10}
+dialog.center[open]{animation:pop .35s cubic-bezier(.2,1.4,.4,1)}
+@keyframes pop{from{transform:scale(.85);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){dialog.center[open]{animation:none}#toast{transition:none}}
+
+@media (min-width:600px){
+  html{font-size:16px}
+  .top{padding:16px 12px 14px}
+  .top h1{font-size:2rem}
+  .totem .price{font-size:4.5rem}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="titlebar">
+      <h1>Bonplein</h1>
+      <button type="button" class="gamechip" id="gameChip" aria-label="Voir ma progression"></button>
+    </div>
+    <form id="searchForm" class="search" autocomplete="off" role="search">
+      <div class="field">
+        <label for="q" class="sr">Adresse, ville ou code postal</label>
+        <input id="q" type="search" placeholder="Adresse, ville ou code postal" enterkeyhint="search" role="combobox" aria-autocomplete="list" aria-controls="suggest" aria-expanded="false">
+        <ul id="suggest" class="suggest" role="listbox" hidden></ul>
+      </div>
+      <button type="submit" class="ibtn primary" id="goBtn" aria-label="Chercher" title="Chercher">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg>
+      </button>
+      <button type="button" id="geoBtn" class="ibtn ghost" aria-label="Utiliser ma position" title="Utiliser ma position">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+      </button>
+    </form>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="controls" aria-label="Réglages">
+    <div class="fuels" role="radiogroup" aria-label="Carburant" id="fuels"></div>
+    <div class="row2">
+      <div class="seg" role="radiogroup" aria-label="Rayon de recherche" id="radius"></div>
+      <label class="tank" for="tank">Plein <input id="tank" type="number" inputmode="numeric" min="5" max="200" step="1"> L</label>
+    </div>
+    <div class="toggles">
+      <label class="chipt"><input type="checkbox" id="hideClosed"> <span>Ouvertes seulement</span></label>
+      <label class="chipt" title="Ignorer les prix déclarés il y a plus de 7 jours"><input type="checkbox" id="freshOnly"> <span>Prix récents (7 j)</span></label>
+    </div>
+  </section>
+
+  <div id="status" class="status" role="status" aria-live="polite"></div>
+  <section id="results" aria-live="polite"></section>
+</main>
+
+<footer class="wrap">
+  <p>Prix, ruptures et horaires : flux instantané « Prix des carburants en France » du ministère de l'Économie (prix-carburants.gouv.fr), actualisé toutes les 10 minutes. Adresses : Géoplateforme IGN.</p>
+  <p>Ouvert ou fermé est calculé à partir des horaires déclarés par chaque station. Les ruptures sont déclarées par les stations elles-mêmes. Votre progression (XP, badges, économies) reste sur cet appareil.</p>
+</footer>
+
+<div id="toast" role="status" aria-live="polite" hidden></div>
+
+<dialog id="pleinDlg" class="sheet" aria-labelledby="pleinTitle">
+  <form class="sheet-in" id="pleinForm">
+    <h2 id="pleinTitle">Valider ce plein</h2>
+    <div id="pleinBody"></div>
+    <div class="sheet-actions">
+      <button type="button" class="sbtn" data-close="pleinDlg">Annuler</button>
+      <button type="submit" class="sbtn primary">Valider le plein</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="profileDlg" class="sheet" aria-labelledby="profileTitle">
+  <div class="sheet-in">
+    <button type="button" class="sheet-x" data-close="profileDlg" aria-label="Fermer">×</button>
+    <h2 id="profileTitle">Ma progression</h2>
+    <div id="profileBody"></div>
+  </div>
+</dialog>
+
+<dialog id="celDlg" class="sheet center" aria-labelledby="celTitle">
+  <canvas id="confetti" hidden></canvas>
+  <div class="sheet-in cel">
+    <h2 id="celTitle">Bien joué !</h2>
+    <div id="celBody"></div>
+    <div class="sheet-actions"><button type="button" class="sbtn primary" data-close="celDlg">Continuer</button></div>
+  </div>
+</dialog>
+
+<script>
+(() => {
+"use strict";
+
+const API_PRIX = "https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/prix-des-carburants-en-france-flux-instantane-v2/records";
+const API_GEO = "https://data.geopf.fr/geocodage";
+const PAGE = 100;
+const MAX_RECORDS = 1000;
+const STALE_DAYS = 7;
+const RADII = [2, 5, 10, 20];
+
+const FUELS = [
+  { key: "gazole", title: "Gazole",          label: "B7",  shape: "square",  du: "du gazole",          aliases: ["gazole", "b7", "diesel"] },
+  { key: "e10",    title: "SP95-E10",        label: "E10", shape: "circle",  du: "du SP95-E10",        aliases: ["e10", "sp95e10"] },
+  { key: "sp95",   title: "SP95",            label: "E5",  shape: "circle",  du: "du SP95",            aliases: ["sp95"] },
+  { key: "sp98",   title: "SP98",            label: "E5",  shape: "circle",  du: "du SP98",            aliases: ["sp98"] },
+  { key: "e85",    title: "E85",             label: "E85", shape: "circle",  du: "du superéthanol E85", aliases: ["e85"] },
+  { key: "gplc",   title: "GPL",             label: "LPG", shape: "diamond", du: "du GPL",             aliases: ["gplc", "gpl", "lpg"] }
+];
+const FUEL = Object.fromEntries(FUELS.map(f => [f.key, f]));
+
+/* ---------- Mémoire locale (facultative) ---------- */
+const store = {
+  get(k, d) { try { const v = localStorage.getItem("plein:" + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem("plein:" + k, JSON.stringify(v)); } catch (e) {} }
+};
+
+const state = {
+  place: store.get("place", null),
+  fuel: FUEL[store.get("fuel", "gazole")] ? store.get("fuel", "gazole") : "gazole",
+  radius: RADII.includes(store.get("radius", 5)) ? store.get("radius", 5) : 5,
+  tank: store.get("tank", 40),
+  hideClosed: store.get("hideClosed", true),
+  freshOnly: store.get("freshOnly", true),
+  sort: "prix",
+  stations: [],
+  fetchedAt: null,
+  truncated: false,
+  loading: false,
+  error: null,
+  expanded: new Set(),
+  ruptOpen: false,
+  city: null,
+  allCities: false,
+  locating: false,
+  notice: null
+};
+
+/* ---------- Utilitaires ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const norm = s => String(s || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+function num(v) {
+  if (v == null || v === "") return null;
+  const n = typeof v === "number" ? v : parseFloat(String(v).replace(",", "."));
+  return isFinite(n) ? n : null;
+}
+const asArray = v => (v == null || v === "") ? [] : (Array.isArray(v) ? v : [v]);
+function parseJ(v) {
+  if (v == null || v === "") return null;
+  if (typeof v === "object") return v;
+  try { return JSON.parse(v); } catch (e) { return null; }
+}
+function toList(v) {
+  if (v == null || v === "") return [];
+  if (Array.isArray(v)) return v.flatMap(toList);
+  if (typeof v === "string") {
+    const t = v.trim();
+    if (t.startsWith("[")) { const j = parseJ(t); if (j) return toList(j); }
+    return t.split(/[;,|]/).map(s => s.trim()).filter(Boolean);
+  }
+  return [];
+}
+const SMALL = new Set(["de", "du", "des", "la", "le", "les", "et", "sur", "en", "aux", "au", "a", "à"]);
+function nice(s) {
+  s = String(s || "").trim().replace(/\s+/g, " ");
+  if (!s || s !== s.toUpperCase()) return s;
+  return s.toLowerCase().split(" ").map((w, i) => {
+    if (i > 0 && SMALL.has(w)) return w;
+    return w.replace(/(^|[-'’])([a-zà-ÿ])/g, (m, p, c) => p + c.toUpperCase())
+            .replace(/^(D|L)['’]/, m => i > 0 ? m.toLowerCase() : m);
+  }).join(" ");
+}
+function cityClean(v) { return nice(String(v || "").replace(/\s+cedex\b.*$/i, "").trim()) || "Ville inconnue"; }
+function cityKey(v) {
+  return String(v || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
+    .replace(/\s+cedex\b.*$/, "").replace(/\bste\b/g, "sainte").replace(/\bst\b/g, "saint").replace(/[^a-z0-9]/g, "") || "inconnue";
+}
+function fmtPrice(p) { return p.toFixed(3).replace(".", ","); }
+function priceHTML(p) { const s = fmtPrice(p); return esc(s.slice(0, -1)) + "<sup>" + esc(s.slice(-1)) + "</sup>"; }
+const euro = v => v.toLocaleString("fr-FR", { style: "currency", currency: "EUR" });
+function fmtDist(d) { return d < 0.95 ? (Math.max(10, Math.round(d * 100) * 10)) + " m" : d.toFixed(1).replace(".", ",") + " km"; }
+function fmtHM(min) { min = ((min % 1440) + 1440) % 1440; return Math.floor(min / 60) + "h" + String(min % 60).padStart(2, "0"); }
+function hm(s) { const m = String(s || "").match(/(\d{1,2})\s*[.:hH]\s*(\d{2})/); return m ? (+m[1]) * 60 + (+m[2]) : null; }
+
+function haversine(a, b) {
+  const R = 6371, rad = x => x * Math.PI / 180;
+  const dLat = rad(b.lat - a.lat), dLon = rad(b.lon - a.lon);
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+/* ---------- Heure de Paris ---------- */
+const DAYS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"];
+function parisNow(d = new Date()) {
+  try {
+    const p = new Intl.DateTimeFormat("fr-FR", { timeZone: "Europe/Paris", weekday: "long", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(d);
+    const g = t => (p.find(x => x.type === t) || {}).value;
+    const dow = DAYS.indexOf(String(g("weekday")).toLowerCase()) + 1;
+    const h = (+g("hour")) % 24, m = +g("minute");
+    if (dow > 0 && isFinite(h) && isFinite(m)) return { dow, min: h * 60 + m };
+  } catch (e) {}
+  return { dow: ((d.getDay() + 6) % 7) + 1, min: d.getHours() * 60 + d.getMinutes() };
+}
+function parisOffset(d) {
+  try {
+    const v = new Intl.DateTimeFormat("en-US", { timeZone: "Europe/Paris", timeZoneName: "shortOffset" }).formatToParts(d).find(p => p.type === "timeZoneName").value;
+    if (v === "GMT" || v === "UTC") return 0;
+    const m = v.match(/([+-])(\d{1,2})(?::?(\d{2}))?/);
+    if (m) return (m[1] === "-" ? -1 : 1) * ((+m[2]) * 60 + (+(m[3] || 0)));
+  } catch (e) {}
+  return -d.getTimezoneOffset();
+}
+function parseMaj(s) {
+  if (!s) return null;
+  s = String(s).trim();
+  if (/T.*(Z|[+-]\d{2}:?\d{2})$/.test(s)) { const d = new Date(s); return isNaN(d) ? null : d; }
+  const m = s.match(/(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?/);
+  if (!m) { const d = new Date(s); return isNaN(d) ? null : d; }
+  const guess = Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +(m[6] || 0));
+  return new Date(guess - parisOffset(new Date(guess)) * 60000);
+}
+function ago(d) {
+  if (!d) return "date inconnue";
+  const min = Math.round((Date.now() - d.getTime()) / 60000);
+  if (min < 2) return "à l'instant";
+  if (min < 60) return "il y a " + min + " min";
+  const h = Math.round(min / 60);
+  if (h < 24) return "il y a " + h + " h";
+  const j = Math.round(h / 24);
+  return "il y a " + j + " j";
+}
+function dateFR(d) {
+  if (!d) return "";
+  try {
+    return new Intl.DateTimeFormat("fr-FR", { timeZone: "Europe/Paris", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(d).replace(":", "h");
+  } catch (e) { return d.toLocaleString("fr-FR"); }
+}
+
+/* ---------- Horaires ---------- */
+function parseHoraires(rec) {
+  let auto = /^(oui|1|true)$/i.test(String(rec.horaires_automate_24_24 || "").trim());
+  const days = {};
+  const h = parseJ(rec.horaires);
+  if (h && typeof h === "object") {
+    if (String(h["@automate-24-24"] || "") === "1") auto = true;
+    for (const j of asArray(h.jour)) {
+      const id = +j["@id"] || (DAYS.indexOf(String(j["@nom"] || "").toLowerCase()) + 1);
+      if (!id) continue;
+      const slots = asArray(j.horaire).map(x => [hm(x["@ouverture"]), hm(x["@fermeture"])]).filter(s => s[0] != null && s[1] != null);
+      days[id] = { closed: String(j["@ferme"] || "") === "1", slots };
+    }
+  } else if (rec.horaires_jour) {
+    const txt = String(rec.horaires_jour);
+    const re = /(Lundi|Mardi|Mercredi|Jeudi|Vendredi|Samedi|Dimanche)\s*(\d{1,2}[.:]\d{2})\s*-\s*(\d{1,2}[.:]\d{2})/gi;
+    let m;
+    while ((m = re.exec(txt))) {
+      const id = DAYS.indexOf(m[1].toLowerCase()) + 1;
+      (days[id] = days[id] || { closed: false, slots: [] }).slots.push([hm(m[2]), hm(m[3])]);
+    }
+  }
+  return { auto, days };
+}
+function openStatus(H, now) {
+  const today = H.days[now.dow];
+  const yd = H.days[now.dow === 1 ? 7 : now.dow - 1];
+  const inSlot = ([o, f]) => o === f ? true : (f > o ? (now.min >= o && now.min < f) : (now.min >= o || now.min < f));
+  const carry = yd && !yd.closed ? yd.slots.find(([o, f]) => f < o && now.min < f) : null;
+  let hours = null, text = "";
+  if (today && (today.closed || today.slots.length)) {
+    const cur = today.closed ? carry : (today.slots.find(inSlot) || carry);
+    if (cur) {
+      hours = "open";
+      text = cur[0] === cur[1] ? "Ouverte 24h/24" : "Ouverte jusqu'à " + fmtHM(cur[1]);
+    } else if (today.closed) {
+      hours = "closed"; text = "Fermée aujourd'hui";
+    } else {
+      hours = "closed";
+      const next = today.slots.map(s => s[0]).filter(o => o > now.min).sort((a, b) => a - b)[0];
+      text = next != null ? "Fermée, ouvre à " + fmtHM(next) : "Fermée, rouvre demain";
+    }
+  } else if (carry) {
+    hours = "open"; text = "Ouverte jusqu'à " + fmtHM(carry[1]);
+  }
+  if (H.auto) {
+    if (hours === "open") return { state: "open", text: text + ", automate 24/24" };
+    return { state: "auto", text: hours === "closed" ? "Automate 24/24 (boutique fermée)" : "Automate 24/24" };
+  }
+  if (hours == null) return { state: "unknown", text: "Horaires non communiqués" };
+  return { state: hours, text };
+}
+function todayHours(H, now) {
+  const t = H.days[now.dow];
+  if (!t) return H.auto ? "Automate 24/24" : "Non communiqués";
+  if (t.closed) return H.auto ? "Fermée aujourd'hui (automate 24/24)" : "Fermée aujourd'hui";
+  if (!t.slots.length) return H.auto ? "Automate 24/24" : "Non communiqués";
+  return t.slots.map(([o, f]) => o === f ? "24h/24" : fmtHM(o) + " à " + fmtHM(f)).join(", ") + (H.auto ? " (automate 24/24)" : "");
+}
+
+/* ---------- Lecture d'une station ---------- */
+function parseStation(rec, origin) {
+  const g = rec.geom || rec.geo_point || {};
+  let lat = num(g.lat), lon = num(g.lon);
+  if ((lat == null || lon == null) && Array.isArray(g.coordinates)) { lon = num(g.coordinates[0]); lat = num(g.coordinates[1]); }
+  if (lat == null || lon == null) {
+    lat = num(rec.latitude); lon = num(rec.longitude);
+    if (lat != null && Math.abs(lat) > 90) lat /= 100000;
+    if (lon != null && Math.abs(lon) > 180) lon /= 100000;
+  }
+  if (lat == null || lon == null) return null;
+
+  const prixJ = asArray(parseJ(rec.prix));
+  const ruptJ = asArray(parseJ(rec.rupture));
+  const temp = toList(rec.carburants_rupture_temporaire).map(norm);
+  const def = toList(rec.carburants_rupture_definitive).map(norm);
+  const indispo = toList(rec.carburants_indisponibles).map(norm);
+  const now = new Date();
+
+  const fuels = {};
+  for (const F of FUELS) {
+    const al = F.aliases;
+    let price = num(rec[F.key + "_prix"]);
+    let maj = rec[F.key + "_maj"] || null;
+    if (price == null) {
+      const p = prixJ.find(x => x && al.includes(norm(x["@nom"])));
+      if (p) { price = num(p["@valeur"]); maj = p["@maj"] || maj; }
+    }
+    if (price != null && price > 100) price = price / 1000;
+    if (price != null && price <= 0) price = null;
+
+    let rType = String(rec[F.key + "_rupture_type"] || "").toLowerCase();
+    let rStart = rec[F.key + "_rupture_debut"] || null;
+    if (!rType) {
+      const rj = ruptJ.find(x => x && al.includes(norm(x["@nom"])));
+      if (rj) {
+        const fin = parseMaj(rj["@fin"]);
+        if (!fin || fin > now) { rType = String(rj["@type"] || "temporaire").toLowerCase(); rStart = rStart || rj["@debut"]; }
+      }
+    }
+    if (!rType) {
+      if (al.some(a => def.includes(a))) rType = "definitive";
+      else if (al.some(a => temp.includes(a))) rType = "temporaire";
+      else if (price == null && al.some(a => indispo.includes(a))) rType = "temporaire";
+    }
+    const majD = parseMaj(maj), rD = parseMaj(rStart);
+    const priceAfterRupture = price != null && majD && rD && majD > rD;
+    let status;
+    if (rType.includes("fini")) status = priceAfterRupture || (price != null && !rD) ? "ok" : "stopped";
+    else if (rType) status = priceAfterRupture ? "ok" : "rupture";
+    else status = price != null ? "ok" : "none";
+    fuels[F.key] = { price: status === "ok" ? price : null, maj: majD, status, ruptureStart: rD };
+  }
+
+  let services = toList(rec.services_service);
+  if (!services.length) { const sj = parseJ(rec.services); if (sj) services = toList(sj.service); }
+
+  return {
+    id: String(rec.id != null ? rec.id : lat + "," + lon),
+    adresse: nice(rec.adresse),
+    ville: nice(rec.ville),
+    cityName: cityClean(rec.ville),
+    cityKey: cityKey(rec.ville),
+    cp: rec.cp || "",
+    autoroute: String(rec.pop || "").toUpperCase() === "A",
+    lat, lon,
+    dist: haversine(origin, { lat, lon }),
+    fuels,
+    H: parseHoraires(rec),
+    services
+  };
+}
+
+/* ---------- Appels réseau ---------- */
+class ApiError extends Error { constructor(kind, status) { super(kind + " " + status); this.kind = kind; this.status = status; } }
+
+async function getJSON(url, kind) {
+  let r;
+  try { r = await fetch(url, { headers: { Accept: "application/json" } }); }
+  catch (e) { throw new ApiError(kind, 0); }
+  if (!r.ok) throw new ApiError(kind, r.status);
+  try { return await r.json(); } catch (e) { throw new ApiError(kind, -1); }
+}
+
+async function geocode(q, limit = 5) {
+  const j = await getJSON(API_GEO + "/search?q=" + encodeURIComponent(q) + "&limit=" + limit, "geo");
+  return (j.features || []).filter(f => f.geometry && f.geometry.coordinates).map(f => ({
+    label: f.properties.label || q,
+    context: f.properties.context || "",
+    lat: f.geometry.coordinates[1],
+    lon: f.geometry.coordinates[0]
+  }));
+}
+async function reverse(lat, lon) {
+  try {
+    const j = await getJSON(API_GEO + "/reverse?lon=" + lon + "&lat=" + lat + "&limit=1", "geo");
+    const f = (j.features || [])[0];
+    return f ? f.properties.label : null;
+  } catch (e) { return null; }
+}
+
+async function fetchStations(place, radius) {
+  const where = "within_distance(geom, geom'POINT(" + place.lon + " " + place.lat + ")', " + radius + "km)";
+  const url = off => API_PRIX + "?where=" + encodeURIComponent(where) + "&limit=" + PAGE + "&offset=" + off;
+  const first = await getJSON(url(0), "prix");
+  const total = num(first.total_count) || 0;
+  let records = (first.results || []).slice();
+  const target = Math.min(total, MAX_RECORDS);
+  const offsets = [];
+  for (let o = records.length; o < target; o += PAGE) offsets.push(o);
+  for (let i = 0; i < offsets.length; i += 4) {
+    const pages = await Promise.all(offsets.slice(i, i + 4).map(o => getJSON(url(o), "prix")));
+    pages.forEach(p => records.push(...(p.results || [])));
+  }
+  return { records, truncated: total > records.length };
+}
+
+/* ---------- Chargement ---------- */
+let reqId = 0;
+async function load() {
+  if (!state.place) return;
+  const my = ++reqId;
+  state.loading = true; state.error = null;
+  render();
+  try {
+    const { records, truncated } = await fetchStations(state.place, state.radius);
+    if (my !== reqId) return;
+    const seen = new Set();
+    state.stations = records.map(r => parseStation(r, state.place)).filter(s => s && !seen.has(s.id) && seen.add(s.id));
+    state.truncated = truncated;
+    state.fetchedAt = new Date();
+    setTimeout(onLoaded, 0);
+  } catch (e) {
+    if (my !== reqId) return;
+    state.error = e;
+    state.stations = [];
+  } finally {
+    if (my === reqId) { state.loading = false; render(); }
+  }
+}
+
+function setPlace(p) {
+  state.place = { label: p.label, lat: p.lat, lon: p.lon };
+  store.set("place", state.place);
+  $("#q").value = p.label;
+  state.expanded.clear();
+  state.city = null;
+  state.allCities = false;
+  state.notice = null;
+  load();
+}
+
+/* ---------- Calcul du comparatif ---------- */
+function compute() {
+  const now = parisNow();
+  const nowMs = Date.now();
+  const F = state.fuel;
+  const rows = state.stations.map(s => ({ s, open: openStatus(s.H, now), f: s.fuels[F] }));
+  const selling = rows.filter(r => r.f && (r.f.status === "ok" || r.f.status === "rupture"));
+  const ruptures = selling.filter(r => r.f.status === "rupture").sort((a, b) => a.s.dist - b.s.dist);
+  const hidden = { closed: 0, stale: 0 };
+  const avail = [];
+  for (const r of selling) {
+    if (r.f.status !== "ok") continue;
+    r.stale = !r.f.maj || (nowMs - r.f.maj.getTime()) / 864e5 > STALE_DAYS;
+    if (state.hideClosed && r.open.state === "closed") { hidden.closed++; continue; }
+    if (state.freshOnly && r.stale) { hidden.stale++; continue; }
+    avail.push(r);
+  }
+  const byPrice = avail.slice().sort((a, b) => a.f.price - b.f.price || a.s.dist - b.s.dist);
+  const prices = byPrice.map(r => r.f.price);
+  const min = prices[0], max = prices[prices.length - 1];
+  const mean = arr => arr.reduce((a, b) => a + b, 0) / arr.length;
+  const avg = prices.length ? mean(prices) : null;
+  byPrice.forEach((r, i) => r.rank = i + 1);
+
+  /* Regroupement par ville */
+  const cmap = new Map();
+  for (const r of byPrice) {
+    const k = r.s.cityKey;
+    let g = cmap.get(k);
+    if (!g) { g = { key: k, name: r.s.cityName, prices: [], minDist: Infinity }; cmap.set(k, g); }
+    g.prices.push(r.f.price);
+    g.minDist = Math.min(g.minDist, r.s.dist);
+  }
+  const cities = [...cmap.values()].map(g => ({ key: g.key, name: g.name, min: g.prices[0], avg: mean(g.prices), count: g.prices.length, minDist: g.minDist }))
+    .sort((a, b) => a.min - b.min || a.avg - b.avg || a.minDist - b.minDist);
+  if (state.city && !cmap.has(state.city)) state.city = null;
+  const cityName = state.city ? cmap.get(state.city).name : null;
+
+  let list = state.sort === "prix" ? byPrice : avail.slice().sort((a, b) => a.s.dist - b.s.dist);
+  if (state.city) list = list.filter(r => r.s.cityKey === state.city);
+  return { now, list, ranked: byPrice, best: byPrice[0] || null, min, max, avg, count: avail.length, hidden, ruptures, cities, cityName, anyStations: state.stations.length > 0 };
+}
+
+/* ---------- Rendu ---------- */
+function pleinBtnHTML(r, c) {
+  const x = xpFor(r, c, Math.max(1, num(state.tank) || 40));
+  return '<button type="button" class="btn-plein" data-plein="' + esc(r.s.id) + '">J\'ai fait le plein ici <span class="xp">+' + x.total + " XP</span></button>";
+}
+function linksHTML(s, lead) {
+  const ll = s.lat + "," + s.lon;
+  return '<div class="go">' + (lead || "") +
+    '<a href="https://www.google.com/maps/dir/?api=1&destination=' + ll + '" target="_blank" rel="noopener" aria-label="Itinéraire avec Google Maps">Google Maps</a>' +
+    '<a class="alt" href="https://waze.com/ul?ll=' + ll + '&navigate=yes" target="_blank" rel="noopener">Waze</a>' +
+    '<a class="alt" href="https://maps.apple.com/?daddr=' + ll + '" target="_blank" rel="noopener">Plans</a>' +
+    "</div>";
+}
+
+function renderStatus() {
+  const el = $("#status");
+  if (state.locating) {
+    el.innerHTML = '<div class="loading"><span class="spin" aria-hidden="true"></span>' + esc(state.locating) + "</div>";
+    return;
+  }
+  if (state.loading) {
+    el.innerHTML = '<div class="loading"><span class="spin" aria-hidden="true"></span>Recherche des stations autour de ' + esc(state.place ? state.place.label : "") + "…</div>";
+    return;
+  }
+  if (state.error) {
+    const e = state.error;
+    let title, body;
+    if (e.status === 0) {
+      title = "Le serveur ne répond pas.";
+      body = "Vérifiez la connexion internet. Si la page est ouverte dans un aperçu de fichier, ouvrez-la plutôt dans Safari ou Chrome.";
+    } else if (e.status === 429) {
+      title = "Trop de demandes envoyées.";
+      body = "Le serveur limite le nombre de recherches. Réessayez dans une minute.";
+    } else if (e.kind === "geo") {
+      title = "La recherche d'adresse a échoué (" + e.status + ").";
+      body = "Réessayez dans un instant, ou utilisez « Ma position ».";
+    } else {
+      title = "Le serveur des prix a renvoyé une erreur (" + e.status + ").";
+      body = "Réessayez dans un instant.";
+    }
+    el.innerHTML = '<div class="err"><strong>' + esc(title) + "</strong>" + esc(body) + "</div>";
+    return;
+  }
+  if (state.notice) {
+    const n = state.notice;
+    el.innerHTML = '<div class="' + (n.kind === "err" ? "err" : "note") + '"><strong>' + esc(n.title) + "</strong>" + esc(n.body) + "</div>";
+    return;
+  }
+  el.innerHTML = "";
+}
+
+function renderResults() {
+  const el = $("#results");
+  if (state.loading || state.error) { el.innerHTML = ""; return; }
+  if (!state.place) {
+    el.innerHTML = '<div class="empty"><p>Tapez une adresse, une ville ou un code postal, ou utilisez votre position. La page affiche les stations dans le rayon choisi, la moins chère en premier.</p></div>';
+    return;
+  }
+  if (!state.fetchedAt) { el.innerHTML = ""; return; }
+
+  const F = FUEL[state.fuel];
+  const c = compute();
+  let html = "";
+
+  if (!c.list.length) {
+    const bigger = RADII.filter(r => r > state.radius);
+    let msg;
+    if (!c.anyStations) msg = "Aucune station dans un rayon de " + state.radius + " km autour de " + esc(state.place.label) + ".";
+    else if (c.hidden.closed || c.hidden.stale) msg = "Aucune station ne correspond aux filtres : " + hiddenText(c.hidden) + ".";
+    else if (c.ruptures.length) msg = "Toutes les stations qui vendent " + esc(F.du) + " dans ce rayon sont en rupture.";
+    else msg = "Aucune station ne vend " + esc(F.du) + " dans un rayon de " + state.radius + " km.";
+    html += '<div class="empty"><p>' + msg + "</p>";
+    const btns = [];
+    if (c.hidden.closed || c.hidden.stale) btns.push('<button type="button" data-act="showall">Tout afficher</button>');
+    bigger.forEach(r => btns.push('<button type="button" data-radius="' + r + '">Chercher à ' + r + " km</button>"));
+    if (btns.length) html += '<div class="chips">' + btns.join("") + "</div>";
+    html += "</div>";
+  } else {
+    const b = c.best, L = Math.max(0, num(state.tank) || 0);
+    const fullBest = b.f.price * L, saveAvg = (c.avg - b.f.price) * L, saveMax = (c.max - b.f.price) * L;
+    html += '<section class="totem" aria-labelledby="bestTitle"><div class="totem-grid">' +
+      '<h2 id="bestTitle">' + esc(F.title) + " le moins cher, à " + fmtDist(b.s.dist) + "</h2>" +
+      '<div class="price" aria-label="' + esc(fmtPrice(b.f.price)) + ' euros le litre">' + priceHTML(b.f.price) + '<span class="unit">€/L</span></div>' +
+      '<p class="addr">' + esc(b.s.adresse) + "<span>" + esc((b.s.cp + " " + b.s.ville).trim()) + (b.s.autoroute ? ", sur autoroute" : "") + "</span></p>" +
+      "</div>" +
+      '<div class="meta"><span class="st ' + b.open.state + '">' + esc(b.open.text) + "</span><span>Prix déclaré " + esc(ago(b.f.maj)) + "</span></div>" +
+      (L > 0 && c.count > 1 && saveAvg > 0.005
+        ? '<p class="calc">Plein de ' + L + " L : <strong>" + euro(fullBest) + "</strong>, soit " + euro(saveAvg) + " de moins que la moyenne et " + euro(saveMax) + " de moins que la plus chère.</p>"
+        : (L > 0 ? '<p class="calc">Plein de ' + L + " L : <strong>" + euro(fullBest) + "</strong>.</p>" : "")) +
+      linksHTML(b.s, pleinBtnHTML(b, c)) +
+      "</section>";
+
+    html += '<p class="summary">' +
+      (c.count === 1 ? "1 station vend " : c.count + " stations vendent ") + esc(F.du) +
+      " dans un rayon de " + state.radius + " km" + (state.hideClosed ? " et sont accessibles maintenant" : "") + "." +
+      (c.count > 1 ? " Prix moyen " + fmtPrice(c.avg) + " €, " + fmtPrice(c.max - c.min) + " € d'écart entre la moins chère et la plus chère." : "") +
+      ((c.hidden.closed || c.hidden.stale) ? ' <span class="hid">Masquées : ' + hiddenText(c.hidden) + '.</span> <button type="button" class="linkbtn" data-act="showall">Tout afficher</button>' : "") +
+      (state.truncated ? ' <span class="hid">Seules les ' + MAX_RECORDS + " stations les plus proches ont été chargées ; réduisez le rayon pour un résultat complet.</span>" : "") +
+      "</p>";
+
+    html += citiesHTML(c, F);
+
+    html += '<div class="sechead" id="stationsHead"><h3>' + (c.cityName ? "Stations à " + esc(c.cityName) : "Toutes les stations") + "</h3>" +
+      '<div class="seg" role="radiogroup" aria-label="Trier">' +
+      '<button type="button" role="radio" data-sort="prix" aria-checked="' + (state.sort === "prix") + '">Moins chères</button>' +
+      '<button type="button" role="radio" data-sort="dist" aria-checked="' + (state.sort === "dist") + '">Plus proches</button>' +
+      "</div></div>" +
+      (c.cityName ? '<p class="cmore"><button type="button" class="linkbtn" data-act="clearcity">Voir les stations de toutes les villes</button></p>' : "");
+
+    html += '<ul class="list">' + c.list.map(r => rowHTML(r, c, F)).join("") + "</ul>";
+  }
+
+  if (c.ruptures.length) {
+    html += '<details class="rupt" id="ruptBox"' + (state.ruptOpen ? " open" : "") + "><summary>" +
+      (c.ruptures.length === 1 ? "1 station en rupture de " : c.ruptures.length + " stations en rupture de ") + esc(F.title) + " dans ce rayon</summary><ul>" +
+      c.ruptures.map(r => "<li>" + esc(r.s.adresse) + ", " + esc(r.s.ville) + " <span>" + fmtDist(r.s.dist) +
+        (r.f.ruptureStart ? ", en rupture depuis le " + esc(dateFR(r.f.ruptureStart)) : ", en rupture") + "</span></li>").join("") +
+      "</ul></details>";
+  }
+
+  html += '<div class="fetched">Données récupérées à ' + fmtHM(parisNow(state.fetchedAt).min) + ' <button type="button" data-act="refresh">Actualiser</button></div>';
+  el.innerHTML = html;
+}
+
+function citiesHTML(c, F) {
+  const n = c.cities.length;
+  if (n < 2) {
+    const next = RADII.find(r => r > state.radius);
+    return next ? '<p class="summary hid">Une seule ville a des stations dans ce rayon. <button type="button" class="linkbtn" data-radius="' + next + '">Élargir à ' + next + " km pour comparer les villes voisines</button></p>" : "";
+  }
+  const shown = state.allCities ? c.cities : c.cities.slice(0, 4);
+  const best = c.cities[0].min;
+  let h = '<div class="sechead"><h3>Classement des villes</h3><span class="hint">Touchez une ville pour voir ses stations</span></div>' +
+    '<ul class="clist">' + shown.map((g, i) => {
+      const d = g.min - best;
+      return '<li><button type="button" class="crow" data-city="' + esc(g.key) + '" aria-pressed="' + (state.city === g.key) + '">' +
+        '<span class="c-name">' + medalHTML(i + 1, n) + esc(g.name) + "</span>" +
+        '<span class="c-min">' + priceHTML(g.min) + "</span>" +
+        '<span class="c-meta">' + (g.count > 1 ? "moyenne " + fmtPrice(g.avg) + " €, " + g.count + " stations" : "1 station") + ", à " + fmtDist(g.minDist) + "</span>" +
+        '<span class="c-delta' + (d < 0.0005 ? " best" : "") + '">' + (d < 0.0005 ? "La moins chère" : "+" + fmtPrice(d) + " €") + "</span>" +
+        "</button></li>";
+    }).join("") + "</ul>";
+  if (n > 4) h += '<p class="cmore"><button type="button" class="linkbtn" data-act="allcities">' + (state.allCities ? "Afficher les 4 premières" : "Voir les " + n + " villes") + "</button></p>";
+  return h;
+}
+
+function hiddenText(h) {
+  const parts = [];
+  if (h.closed) parts.push(h.closed + (h.closed > 1 ? " fermées" : " fermée"));
+  if (h.stale) parts.push(h.stale + " au prix de plus de " + STALE_DAYS + " jours");
+  return parts.join(", ");
+}
+
+function rowHTML(r, c, F) {
+  const s = r.s, open = state.expanded.has(s.id);
+  const pos = c.max > c.min ? (r.f.price - c.min) / (c.max - c.min) : 0;
+  const delta = r.f.price - c.min;
+  const did = "d-" + s.id.replace(/[^a-z0-9_-]/gi, "");
+  let h = '<li><button type="button" class="row-main" data-row="' + esc(s.id) + '" aria-expanded="' + open + '" aria-controls="' + did + '">' +
+    '<span class="r-price"><span class="r-rank">' + medalHTML(r.rank, c.count) + (state.sort === "dist" ? fmtDist(s.dist) : (r.rank <= 3 && c.count >= 3 ? "" : "n° " + r.rank)) + '</span><span class="p">' + priceHTML(r.f.price) + '</span><span class="gauge" aria-hidden="true"><i style="left:' + (pos * 100).toFixed(1) + '%"></i></span>' +
+    '<span class="r-delta' + (delta < 0.0005 ? " best" : "") + '">' + (delta < 0.0005 ? "Meilleur prix" : "+" + fmtPrice(delta) + " €") + "</span></span>" +
+    '<span class="r-info"><span class="r-addr">' + esc(s.adresse) + "</span>" +
+    '<span class="r-meta">' + esc(s.cityName) + (state.sort === "dist" ? "" : ", " + fmtDist(s.dist)) + (s.autoroute ? ", autoroute" : "") + (r.stale ? ', <span class="stale">prix ' + esc(ago(r.f.maj)) + "</span>" : "") + "</span>" +
+    '<span class="st ' + r.open.state + '">' + esc(r.open.text) + "</span></span>" +
+    "</button>";
+  h += '<div class="row-detail" id="' + did + '"' + (open ? "" : " hidden") + ">" + (open ? detailHTML(r, c) : "") + "</div></li>";
+  return h;
+}
+
+function detailHTML(r, c) {
+  const s = r.s;
+  const lines = FUELS.map(F => {
+    const f = s.fuels[F.key];
+    if (!f || (f.status !== "ok" && f.status !== "rupture")) return "";
+    const sel = F.key === state.fuel ? ' class="sel"' : "";
+    if (f.status === "rupture") return "<tr" + sel + "><td>" + esc(F.title) + '</td><td class="ko">Rupture</td><td>' + (f.ruptureStart ? "depuis le " + esc(dateFR(f.ruptureStart)) : "") + "</td></tr>";
+    return "<tr" + sel + "><td>" + esc(F.title) + "</td><td>" + fmtPrice(f.price) + " €</td><td>" + esc(ago(f.maj)) + "</td></tr>";
+  }).join("");
+  const L = Math.max(0, num(state.tank) || 0);
+  return '<table class="prices"><tbody>' + lines + "</tbody></table>" +
+    (L > 0 ? '<p class="detail-line">Plein de ' + L + " L ici : <b>" + euro(r.f.price * L) + "</b>" + (r.f.price > c.min ? ", " + euro((r.f.price - c.min) * L) + " de plus qu'à la moins chère" : "") + ".</p>" : "") +
+    '<p class="detail-line">Horaires aujourd\'hui : <b>' + esc(todayHours(s.H, c.now)) + "</b></p>" +
+    (s.services.length ? '<p class="detail-line">Services : ' + esc(s.services.join(", ")) + "</p>" : "") +
+    linksHTML(s, pleinBtnHTML(r, c));
+}
+
+function renderControls() {
+  $("#fuels").innerHTML = FUELS.map(F =>
+    '<button type="button" class="fuel" role="radio" data-fuel="' + F.key + '" aria-checked="' + (F.key === state.fuel) + '" aria-label="' + esc(F.title) + '">' +
+    '<span class="badge ' + F.shape + '" aria-hidden="true"><span>' + F.label + "</span></span>" +
+    '<span class="fname">' + esc(F.title) + "</span></button>").join("");
+  $("#radius").innerHTML = RADII.map(r =>
+    '<button type="button" role="radio" data-radius="' + r + '" aria-checked="' + (r === state.radius) + '">' + r + " km</button>").join("");
+  $("#tank").value = state.tank;
+  $("#hideClosed").checked = !!state.hideClosed;
+  $("#freshOnly").checked = !!state.freshOnly;
+}
+
+function render() {
+  $("#goBtn").disabled = state.loading;
+  renderStatus();
+  renderResults();
+}
+
+/* ---------- Suggestions d'adresse ---------- */
+let sugg = [], suggIdx = -1, suggTimer = null, suggReq = 0;
+const sEl = $("#suggest"), qEl = $("#q");
+function closeSugg() { sEl.hidden = true; qEl.setAttribute("aria-expanded", "false"); suggIdx = -1; }
+function drawSugg() {
+  if (!sugg.length) { closeSugg(); return; }
+  sEl.innerHTML = sugg.map((p, i) => '<li role="option" id="sg' + i + '" data-i="' + i + '" aria-selected="' + (i === suggIdx) + '">' + esc(p.label) + (p.context ? "<small>" + esc(p.context) + "</small>" : "") + "</li>").join("");
+  sEl.hidden = false; qEl.setAttribute("aria-expanded", "true");
+  if (suggIdx >= 0) qEl.setAttribute("aria-activedescendant", "sg" + suggIdx); else qEl.removeAttribute("aria-activedescendant");
+}
+qEl.addEventListener("input", () => {
+  clearTimeout(suggTimer);
+  const q = qEl.value.trim();
+  if (q.length < 3) { sugg = []; closeSugg(); return; }
+  suggTimer = setTimeout(async () => {
+    const my = ++suggReq;
+    try { const res = await geocode(q, 5); if (my === suggReq && qEl.value.trim() === q) { sugg = res; suggIdx = -1; drawSugg(); } }
+    catch (e) { /* les suggestions sont un confort : on ignore l'erreur */ }
+  }, 250);
+});
+qEl.addEventListener("keydown", e => {
+  if (sEl.hidden) return;
+  if (e.key === "ArrowDown") { e.preventDefault(); suggIdx = Math.min(sugg.length - 1, suggIdx + 1); drawSugg(); }
+  else if (e.key === "ArrowUp") { e.preventDefault(); suggIdx = Math.max(-1, suggIdx - 1); drawSugg(); }
+  else if (e.key === "Escape") { closeSugg(); }
+});
+sEl.addEventListener("mousedown", e => e.preventDefault());
+sEl.addEventListener("click", e => {
+  const li = e.target.closest("li[data-i]"); if (!li) return;
+  const p = sugg[+li.dataset.i]; closeSugg(); if (p) setPlace(p);
+});
+qEl.addEventListener("blur", () => setTimeout(closeSugg, 150));
+
+function setNotice(kind, title, body) {
+  state.notice = title ? { kind, title, body: body || "" } : null;
+  state.error = null;
+  renderStatus();
+}
+
+$("#searchForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  clearTimeout(suggTimer); suggReq++;
+  if (!sEl.hidden && suggIdx >= 0 && sugg[suggIdx]) { const p = sugg[suggIdx]; closeSugg(); setPlace(p); return; }
+  closeSugg();
+  const q = qEl.value.trim();
+  if (q.length < 3) { setNotice("err", "Adresse trop courte.", "Tapez au moins 3 caractères, par exemple un code postal."); return; }
+  state.locating = "Localisation de « " + q + " »…"; renderStatus();
+  try {
+    const res = await geocode(q, 1);
+    state.locating = false;
+    if (!res.length) { setNotice("err", "Adresse introuvable.", "Aucun résultat pour « " + q + " ». Ajoutez la ville ou le code postal."); return; }
+    setPlace(res[0]);
+  } catch (err) { state.locating = false; state.error = err; render(); }
+});
+
+/* ---------- Géolocalisation ---------- */
+function fallbackPlace() {
+  if (state.place && !state.fetchedAt && !state.loading) { qEl.value = state.place.label; load(); }
+}
+const geoBlockedByPage = () => !/^https?:$/.test(location.protocol) || !window.isSecureContext;
+function locate(auto) {
+  const kind = auto ? "info" : "err";
+  if (geoBlockedByPage()) {
+    setNotice(kind, "Localisation impossible sur cette page.", "Elle est ouverte comme un fichier : Chrome et Safari bloquent alors la position, même autorisée. Ouvrez la version en ligne (https), ou tapez une adresse.");
+    if (auto) fallbackPlace();
+    return;
+  }
+  if (!navigator.geolocation) {
+    setNotice(kind, "Position indisponible.", "Ce navigateur ne donne pas accès à la position. Tapez une adresse.");
+    if (auto) fallbackPlace();
+    return;
+  }
+  state.locating = "Recherche de votre position…"; state.error = null; state.notice = null;
+  renderStatus();
+  navigator.geolocation.getCurrentPosition(async pos => {
+    const lat = pos.coords.latitude, lon = pos.coords.longitude;
+    const label = (await reverse(lat, lon)) || "Ma position";
+    state.locating = false;
+    setPlace({ label, lat, lon, geo: true });
+  }, err => {
+    state.locating = false;
+    const body = err && err.code === 1
+      ? "La position est bloquée pour ce site. Dans Chrome : icône à gauche de l'adresse, puis Autorisations, puis Position. Ou tapez une adresse."
+      : "La position n'a pas pu être déterminée. Tapez une adresse ou réessayez.";
+    if (auto && state.place) { setNotice("info", "Position indisponible, dernière adresse utilisée.", body); fallbackPlace(); }
+    else setNotice(kind, "Position indisponible.", body);
+  }, { enableHighAccuracy: false, timeout: 15000, maximumAge: 120000 });
+}
+$("#geoBtn").addEventListener("click", () => locate(false));
+
+/* ---------- Jeu : XP, niveaux, badges ---------- */
+const LEVELS = [
+  { xp: 0, name: "Apprenti du plein" },
+  { xp: 100, name: "Œil de lynx" },
+  { xp: 250, name: "Chasseur de centimes" },
+  { xp: 500, name: "Pro de la pompe" },
+  { xp: 900, name: "Maître du litre" },
+  { xp: 1500, name: "Légende du plein" }
+];
+const BADGE_XP = 25;
+const BADGES = [
+  { id: "first",    icon: "⛽", name: "Premier plein",       desc: "Enregistrer un premier plein." },
+  { id: "top1",     icon: "🥇", name: "Pile la moins chère", desc: "Faire le plein à la station n° 1 du secteur." },
+  { id: "podium3",  icon: "🏆", name: "Abonné au podium",    desc: "3 pleins dans le top 3 du secteur." },
+  { id: "eco10",    icon: "💶", name: "10 € économisés",     desc: "Cumuler 10 € d'économies." },
+  { id: "eco50",    icon: "💰", name: "50 € économisés",     desc: "Cumuler 50 € d'économies." },
+  { id: "eco100",   icon: "🏦", name: "100 € économisés",    desc: "Cumuler 100 € d'économies." },
+  { id: "explorer", icon: "🧭", name: "Explorateur",         desc: "Comparer 5 villes différentes." },
+  { id: "streak3",  icon: "🔥", name: "Régulier",            desc: "Un plein enregistré 3 semaines de suite." },
+  { id: "pleins10", icon: "🎯", name: "Fidèle",              desc: "10 pleins enregistrés." },
+  { id: "early",    icon: "🌅", name: "Lève-tôt",            desc: "Chercher une station avant 7h." }
+];
+const game = Object.assign({ xp: 0, saved: 0, pleins: [], badges: {}, cities: [], lastDay: null, weekDone: null }, store.get("game", {}) || {});
+function saveGame() { store.set("game", game); }
+function dayKey(d = new Date()) {
+  try { return new Intl.DateTimeFormat("fr-CA", { timeZone: "Europe/Paris", year: "numeric", month: "2-digit", day: "2-digit" }).format(d); }
+  catch (e) { return d.toISOString().slice(0, 10); }
+}
+function isoWeek(d = new Date()) {
+  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const day = t.getUTCDay() || 7;
+  t.setUTCDate(t.getUTCDate() + 4 - day);
+  const y = t.getUTCFullYear();
+  return y + "-W" + Math.ceil(((t - Date.UTC(y, 0, 1)) / 864e5 + 1) / 7);
+}
+function levelOf(xp) {
+  let i = 0;
+  while (i + 1 < LEVELS.length && xp >= LEVELS[i + 1].xp) i++;
+  const cur = LEVELS[i], next = LEVELS[i + 1] || null;
+  return { n: i + 1, name: cur.name, next, pct: next ? (xp - cur.xp) / (next.xp - cur.xp) : 1, toNext: next ? next.xp - xp : 0 };
+}
+function streakWeeks() {
+  const weeks = new Set(game.pleins.map(p => isoWeek(new Date(p.t))));
+  let d = new Date(), n = 0;
+  if (!weeks.has(isoWeek(d))) d = new Date(d.getTime() - 7 * 864e5);
+  while (weeks.has(isoWeek(d))) { n++; d = new Date(d.getTime() - 7 * 864e5); }
+  return n;
+}
+const challengeDone = () => game.weekDone === isoWeek();
+function medalHTML(rank, count) {
+  return rank <= 3 && count >= 3 ? '<span class="medal m' + rank + '" aria-label="' + rank + (rank === 1 ? "re" : "e") + ' place">' + rank + "</span>" : "";
+}
+function xpFor(r, c, liters) {
+  const saved = c.count > 1 ? (c.avg - r.f.price) * liters : 0;
+  const eco = saved > 0 ? Math.round(saved * 10) : 0;
+  const podium = c.count >= 3 && r.rank <= 3;
+  const rankB = podium ? [0, 30, 20, 10][r.rank] : 0;
+  const chal = podium && !challengeDone() ? 50 : 0;
+  return { saved, eco, rankB, chal, base: 20, total: 20 + eco + rankB + chal, podium };
+}
+function checkBadges(ctx) {
+  ctx = ctx || {};
+  const tests = {
+    first: () => game.pleins.length >= 1,
+    top1: () => ctx.rank === 1,
+    podium3: () => game.pleins.filter(p => p.rank && p.rank <= 3).length >= 3,
+    eco10: () => game.saved >= 10,
+    eco50: () => game.saved >= 50,
+    eco100: () => game.saved >= 100,
+    explorer: () => game.cities.length >= 5,
+    streak3: () => streakWeeks() >= 3,
+    pleins10: () => game.pleins.length >= 10,
+    early: () => !!ctx.early
+  };
+  const won = [];
+  for (const b of BADGES) if (!game.badges[b.id] && tests[b.id]()) { game.badges[b.id] = Date.now(); won.push(b); }
+  return won;
+}
+function award(xp, label, ctx) {
+  const before = levelOf(game.xp).n;
+  game.xp += xp;
+  const won = checkBadges(ctx);
+  game.xp += won.length * BADGE_XP;
+  saveGame();
+  renderGameChip();
+  if (label) toast("<b>+" + (xp + won.length * BADGE_XP) + " XP</b>" + esc(label));
+  const L = levelOf(game.xp);
+  celebrate(won, L.n > before ? L : null);
+}
+
+function renderGameChip() {
+  const L = levelOf(game.xp);
+  const chip = $("#gameChip");
+  chip.innerHTML = '<span class="lv">' + L.n + '</span><span class="xpw"><span>' + game.xp + ' XP</span><span class="xpbar"><i style="width:' + Math.round(L.pct * 100) + '%"></i></span></span>';
+  chip.setAttribute("aria-label", "Niveau " + L.n + ", " + L.name + ", " + game.xp + " XP. Voir ma progression");
+}
+
+let toastTimer = null;
+function toast(html) {
+  const t = $("#toast");
+  t.innerHTML = html; t.hidden = false;
+  t.classList.remove("show"); void t.offsetWidth; t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.classList.remove("show"); setTimeout(() => { t.hidden = true; }, 250); }, 2800);
+}
+
+function openDlg(id) { const d = document.getElementById(id); if (d.open) return; try { d.showModal(); } catch (e) { d.setAttribute("open", ""); } }
+function closeDlg(id) { const d = document.getElementById(id); try { d.close(); } catch (e) { d.removeAttribute("open"); } }
+document.querySelectorAll("dialog").forEach(d => d.addEventListener("click", e => { if (e.target === d) closeDlg(d.id); }));
+
+function celebrate(won, level) {
+  if (!won.length && !level) return;
+  const parts = [];
+  if (level) parts.push('<div class="cel-item"><span class="cel-ic">' + level.n + "</span><div><b>Niveau " + level.n + " atteint</b><span>" + esc(level.name) + "</span></div></div>");
+  won.forEach(b => parts.push('<div class="cel-item"><span class="cel-ic emo">' + b.icon + "</span><div><b>Badge débloqué : " + esc(b.name) + "</b><span>" + esc(b.desc) + " +" + BADGE_XP + " XP</span></div></div>"));
+  $("#celBody").innerHTML = parts.join("");
+  const show = () => { openDlg("celDlg"); confetti(); };
+  if ($("#pleinDlg").open) { closeDlg("pleinDlg"); setTimeout(show, 120); } else show();
+}
+
+function confetti() {
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const cv = $("#confetti"), ctx = cv.getContext && cv.getContext("2d");
+  if (!ctx) return;
+  const dpr = window.devicePixelRatio || 1;
+  const W = cv.width = innerWidth * dpr, H = cv.height = innerHeight * dpr;
+  cv.hidden = false;
+  const cols = ["#F4C542", "#0E8459", "#FFFFFF", "#2F64A8", "#DDA474"];
+  const P = Array.from({ length: 120 }, () => ({
+    x: W / 2 + (Math.random() - .5) * W * .25, y: H * .38,
+    vx: (Math.random() - .5) * 15 * dpr, vy: (-Math.random() * 15 - 5) * dpr,
+    s: (4 + Math.random() * 5) * dpr, r: Math.random() * 6, vr: (Math.random() - .5) * .35,
+    c: cols[(Math.random() * cols.length) | 0]
+  }));
+  const t0 = performance.now();
+  (function frame(t) {
+    const k = (t - t0) / 1900;
+    ctx.clearRect(0, 0, W, H);
+    for (const p of P) {
+      p.vy += .42 * dpr; p.x += p.vx; p.y += p.vy; p.vx *= .985; p.r += p.vr;
+      ctx.save(); ctx.globalAlpha = Math.max(0, 1 - k); ctx.translate(p.x, p.y); ctx.rotate(p.r);
+      ctx.fillStyle = p.c; ctx.fillRect(-p.s / 2, -p.s / 3, p.s, p.s * .66); ctx.restore();
+    }
+    if (k < 1) requestAnimationFrame(frame); else { ctx.clearRect(0, 0, W, H); cv.hidden = true; }
+  })(t0);
+}
+
+/* Plein : confirmation puis récompense */
+let pending = null;
+function openPlein(id) {
+  const c = compute();
+  const r = c.ranked.find(x => x.s.id === id);
+  if (!r) return;
+  pending = { id };
+  const L = Math.max(1, num(state.tank) || 40);
+  $("#pleinBody").innerHTML =
+    '<p class="pl-st">' + esc(r.s.adresse) + "<span>" + esc(r.s.cityName) + ", " + esc(FUEL[state.fuel].title) + " à " + fmtPrice(r.f.price) + " €/L</span></p>" +
+    '<div class="pl-grid"><label for="pleinL">Litres mis dans le réservoir</label><input id="pleinL" type="number" inputmode="decimal" min="1" max="200" step="1" value="' + L + '">' +
+    '<span>Total payé</span><span class="v" id="plTotal"></span>' +
+    '<span>Par rapport à la moyenne du secteur</span><span class="v" id="plSaved"></span></div>' +
+    '<div class="pl-xp" id="plXp"></div>';
+  const upd = () => {
+    const l = Math.max(0, num($("#pleinL").value) || 0);
+    const x = xpFor(r, c, l);
+    $("#plTotal").textContent = euro(r.f.price * l);
+    const s = $("#plSaved");
+    s.textContent = Math.abs(x.saved) < 0.005 ? "identique" : euro(Math.abs(x.saved)) + (x.saved > 0 ? " de moins" : " de plus");
+    s.className = "v " + (x.saved > 0.005 ? "plus" : x.saved < -0.005 ? "minus" : "");
+    const why = ["20 pour le plein"];
+    if (x.eco) why.push(x.eco + " pour l'économie");
+    if (x.rankB) why.push(x.rankB + " de bonus podium");
+    if (x.chal) why.push("50 pour le défi de la semaine");
+    $("#plXp").innerHTML = "<b>+" + x.total + " XP</b>" + esc(why.join(", ")) + ".";
+  };
+  $("#pleinL").addEventListener("input", upd);
+  upd();
+  openDlg("pleinDlg");
+}
+$("#pleinForm").addEventListener("submit", e => {
+  e.preventDefault();
+  if (!pending) return;
+  const c = compute();
+  const r = c.ranked.find(x => x.s.id === pending.id);
+  const liters = Math.max(0, num($("#pleinL").value) || 0);
+  pending = null;
+  if (!r || !liters) { closeDlg("pleinDlg"); return; }
+  const x = xpFor(r, c, liters);
+  const rank = x.podium || c.count >= 3 ? r.rank : null;
+  game.pleins.unshift({ t: Date.now(), ville: r.s.cityName, adresse: r.s.adresse, fuel: state.fuel, price: r.f.price, liters, saved: Math.round(x.saved * 100) / 100, rank, xp: x.total });
+  game.pleins = game.pleins.slice(0, 60);
+  game.saved = Math.round((game.saved + x.saved) * 100) / 100;
+  if (x.chal) game.weekDone = isoWeek();
+  if (!game.cities.includes(r.s.cityKey)) game.cities.push(r.s.cityKey);
+  closeDlg("pleinDlg");
+  award(x.total, x.saved > 0.005 ? euro(x.saved) + " économisés" : "Plein enregistré", { rank });
+  render();
+});
+
+/* Progression */
+function renderProfile() {
+  const L = levelOf(game.xp), sw = streakWeeks(), done = challengeDone();
+  const nb = Object.keys(game.badges).length;
+  const badges = BADGES.map(b => {
+    const on = !!game.badges[b.id];
+    return '<li class="bdg ' + (on ? "on" : "off") + '"><span class="bi" aria-hidden="true">' + (on ? b.icon : "🔒") + "</span><b>" + esc(b.name) + "</b><small>" + esc(b.desc) + "</small></li>";
+  }).join("");
+  const hist = game.pleins.slice(0, 6).map(p => {
+    const d = new Date(p.t);
+    let when = ""; try { when = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short" }).format(d); } catch (e) {}
+    return "<li><span>" + esc(when) + ", " + esc(p.ville) + " (" + esc((FUEL[p.fuel] || {}).title || "") + ")</span><span>" + fmtPrice(p.price) + ' €, <span class="' + (p.saved >= 0 ? "plus" : "minus") + '">' + (p.saved >= 0 ? "−" : "+") + euro(Math.abs(p.saved)) + "</span></span></li>";
+  }).join("") || '<li class="none">Aucun plein pour l\'instant. Après un plein, touchez « J\'ai fait le plein ici » sur la station.</li>';
+  $("#profileBody").innerHTML =
+    '<div class="pf-level"><span class="lv big">' + L.n + "</span><div><b>" + esc(L.name) + "</b><span>" + game.xp + " XP" +
+      (L.next ? ", encore " + L.toNext + " XP pour devenir « " + esc(L.next.name) + " »" : ", niveau maximum atteint") +
+      '</span><span class="xpbar wide"><i style="width:' + Math.round(L.pct * 100) + '%"></i></span></div></div>' +
+    '<div class="pf-stats"><div><b>' + euro(game.saved) + "</b><span>économisés</span></div><div><b>" + game.pleins.length + "</b><span>" + (game.pleins.length > 1 ? "pleins" : "plein") + "</span></div><div><b>" + sw + "</b><span>" + (sw > 1 ? "semaines de suite" : "semaine de suite") + "</span></div></div>" +
+    '<div class="pf-chal' + (done ? " done" : "") + '"><b>Défi de la semaine</b><span>Faire le plein dans le top 3 du secteur : +50 XP.</span><em>' + (done ? "Réussi" : "À faire") + "</em></div>" +
+    "<h3>Badges " + nb + "/" + BADGES.length + '</h3><ul class="badges">' + badges + "</ul>" +
+    '<h3>Derniers pleins</h3><ul class="hist">' + hist + "</ul>" +
+    '<p class="pf-how">Gagner des XP : 5 par jour en cherchant, 20 par plein enregistré, 10 par euro économisé par rapport à la moyenne du secteur, 10 à 30 de bonus sur le podium, 50 pour le défi de la semaine, ' + BADGE_XP + " par badge, 3 par nouvelle ville comparée.</p>" +
+    '<button type="button" class="linkbtn danger" id="resetGame">Remettre ma progression à zéro</button>';
+}
+function onLoaded() {
+  const k = dayKey();
+  const early = parisNow().min < 7 * 60;
+  if (game.lastDay !== k) { game.lastDay = k; award(5, "visite du jour", { early }); }
+  else award(0, null, { early });
+}
+
+/* ---------- Réglages ---------- */
+document.addEventListener("click", e => {
+  const pl = e.target.closest("[data-plein]");
+  if (pl) { openPlein(pl.dataset.plein); return; }
+  const cl = e.target.closest("[data-close]");
+  if (cl) { closeDlg(cl.dataset.close); return; }
+  if (e.target.closest("#gameChip")) { renderProfile(); openDlg("profileDlg"); return; }
+  const rs = e.target.closest("#resetGame");
+  if (rs) {
+    if (rs.dataset.armed) {
+      Object.assign(game, { xp: 0, saved: 0, pleins: [], badges: {}, cities: [], lastDay: null, weekDone: null });
+      saveGame(); renderGameChip(); renderProfile(); render(); toast("Progression remise à zéro");
+    } else { rs.dataset.armed = "1"; rs.textContent = "Confirmer : tout effacer (XP, badges, historique)"; }
+    return;
+  }
+  const fuel = e.target.closest("[data-fuel]");
+  if (fuel) { state.fuel = fuel.dataset.fuel; store.set("fuel", state.fuel); state.expanded.clear(); renderControls(); render(); return; }
+  const rad = e.target.closest("[data-radius]");
+  if (rad) { state.radius = +rad.dataset.radius; store.set("radius", state.radius); renderControls(); load(); render(); return; }
+  const sort = e.target.closest("[data-sort]");
+  if (sort) { state.sort = sort.dataset.sort; render(); return; }
+  const row = e.target.closest("[data-row]");
+  if (row) { const id = row.dataset.row; state.expanded.has(id) ? state.expanded.delete(id) : state.expanded.add(id); render(); const b = document.querySelector('[data-row="' + CSS.escape(id) + '"]'); if (b) b.focus({ preventScroll: true }); return; }
+  const city = e.target.closest("[data-city]");
+  if (city) {
+    const k = city.dataset.city;
+    state.city = state.city === k ? null : k;
+    state.expanded.clear();
+    render();
+    if (state.city && !game.cities.includes(k)) { game.cities.push(k); award(3, "nouvelle ville comparée"); }
+    if (state.city) { const h = $("#stationsHead"); if (h) h.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" }); }
+    return;
+  }
+  const act = e.target.closest("[data-act]");
+  if (act) {
+    if (act.dataset.act === "allcities") { state.allCities = !state.allCities; render(); }
+    if (act.dataset.act === "clearcity") { state.city = null; render(); }
+    if (act.dataset.act === "refresh") load();
+    if (act.dataset.act === "showall") { state.hideClosed = false; state.freshOnly = false; store.set("hideClosed", false); store.set("freshOnly", false); renderControls(); render(); }
+  }
+});
+document.addEventListener("toggle", e => { if (e.target.id === "ruptBox") state.ruptOpen = e.target.open; }, true);
+$("#tank").addEventListener("input", e => { const v = Math.round(num(e.target.value) || 0); state.tank = v; store.set("tank", v); render(); });
+$("#hideClosed").addEventListener("change", e => { state.hideClosed = e.target.checked; store.set("hideClosed", state.hideClosed); render(); });
+$("#freshOnly").addEventListener("change", e => { state.freshOnly = e.target.checked; store.set("freshOnly", state.freshOnly); render(); });
+
+/* Ouvert / fermé et « il y a… » restent justes si la page reste ouverte */
+setInterval(() => { if (!state.loading && state.fetchedAt) render(); }, 60000);
+
+renderControls();
+render();
+renderGameChip();
+(async () => {
+  if (state.place) qEl.value = state.place.label;
+  if (!geoBlockedByPage() && navigator.permissions && navigator.permissions.query) {
+    try {
+      const st = (await navigator.permissions.query({ name: "geolocation" })).state;
+      if (st === "denied") {
+        setNotice("info", "Position bloquée pour ce site.", "Pour une proposition automatique à chaque ouverture, autorisez la position dans Chrome (icône à gauche de l'adresse). Sinon, tapez une adresse.");
+        fallbackPlace();
+        return;
+      }
+    } catch (e) {}
+  }
+  locate(true);
+})();
+})();
+</script>
+</body>
+</html>
