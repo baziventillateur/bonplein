@@ -446,7 +446,7 @@ dialog.center[open]{animation:pop .35s cubic-bezier(.2,1.4,.4,1)}
 <footer class="wrap">
   <p>Prix, ruptures et horaires : flux instantané « Prix des carburants en France » du ministère de l'Économie (prix-carburants.gouv.fr), actualisé toutes les 10 minutes. Adresses : Géoplateforme IGN.</p>
   <p>Ouvert ou fermé est calculé à partir des horaires déclarés par chaque station. Les ruptures sont déclarées par les stations elles-mêmes. L'évolution des prix vient d'un relevé fait chaque lundi. Votre progression (XP, badges, économies) reste sur cet appareil. Si vous créez un compte, votre e-mail, votre progression, vos réglages et vos stations favorites sont enregistrés chez Supabase, dans l'Union européenne ; vous pouvez tout supprimer depuis « Ma progression ».</p>
-  <p class="ver" id="ver">v1.103 du 15/11/2026 à 21h25</p>
+  <p class="ver" id="ver">v1.104 du 15/11/2026 à 21h51</p>
 </footer>
 
 <div id="toast" role="status" aria-live="polite" hidden></div>
@@ -460,6 +460,17 @@ dialog.center[open]{animation:pop .35s cubic-bezier(.2,1.4,.4,1)}
       <button type="submit" class="sbtn primary">Valider le plein</button>
     </div>
   </form>
+</dialog>
+
+<dialog id="desaboDlg" class="sheet" aria-labelledby="desaboTitle">
+  <div class="sheet-in">
+    <h2 id="desaboTitle">Ne plus recevoir le point du lundi ?</h2>
+    <div id="desaboBody"><p>Vous ne recevrez plus l’e-mail du lundi avec les prix près de chez vous. Votre compte, votre progression et vos stations restent enregistrés.</p></div>
+    <div class="sheet-actions" id="desaboActions">
+      <button type="button" class="sbtn" data-close="desaboDlg">Garder les e-mails</button>
+      <button type="button" class="sbtn primary" id="desaboGo">Ne plus recevoir</button>
+    </div>
+  </div>
 </dialog>
 
 <dialog id="profileDlg" class="sheet" aria-labelledby="profileTitle">
@@ -1887,7 +1898,7 @@ function toggleFav(id) {
 function setHebdo(on) {
   if (on) {
     if (!state.place) { toast("Cherchez d'abord une adresse"); renderAccount(); return; }
-    acct.alertes = { hebdo: true, fuel: state.fuel, lat: state.place.lat, lon: state.place.lon, rayon: state.radius, label: state.place.label, seuil: acct.alertes.seuil || null };
+    acct.alertes = { hebdo: true, hebdo_at: new Date().toISOString(), fuel: state.fuel, lat: state.place.lat, lon: state.place.lon, rayon: state.radius, label: state.place.label, seuil: acct.alertes.seuil || null };
   } else acct.alertes = Object.assign({}, acct.alertes, { hebdo: false });
   queueSave(); renderAccount();
 }
@@ -1966,8 +1977,41 @@ async function acctClick(e) {
   if (k === "hebdozone") { setHebdo(true); toast("Zone mise à jour"); return true; }
   return false;
 }
+const DESABO_API = SB_BASE + "/functions/v1/desabonnement?t=";
+let desaboTok = null;
+function desaboBoot() {
+  const q = new URLSearchParams(location.search);
+  const t = q.get("desabo");
+  if (t == null) return;
+  q.delete("desabo");
+  try { history.replaceState(null, "", location.pathname + (q.toString() ? "?" + q : "") + location.hash); } catch (e) {}
+  desaboTok = t;
+  setTimeout(() => openDlg("desaboDlg"), 300);
+}
+async function desaboGo() {
+  const btn = $("#desaboGo");
+  btn.disabled = true; btn.textContent = "Un instant…";
+  let j = null;
+  try {
+    const r = await fetch(DESABO_API + encodeURIComponent(desaboTok || ""), { method: "POST" });
+    j = await r.json().catch(() => null);
+    if (!r.ok) j = null;
+  } catch (e) { j = null; }
+  if (!j || !j.ok) {
+    btn.disabled = false; btn.textContent = "Réessayer";
+    $("#desaboBody").innerHTML = "<p>Le désabonnement n’a pas abouti. Réessayez dans un instant, ou écrivez à contact@paceapp.fr.</p>";
+    return;
+  }
+  $("#desaboTitle").textContent = "Désabonnement confirmé";
+  $("#desaboBody").innerHTML = j.known
+    ? "<p>C’est fait : vous ne recevrez plus le point du lundi. Vous pouvez le réactiver quand vous voulez depuis « Ma progression ».</p>"
+    : "<p>Ce lien ne correspond plus à aucun abonnement : vous ne recevrez pas le point du lundi.</p>";
+  $("#desaboActions").innerHTML = '<button type="button" class="sbtn primary" data-close="desaboDlg">Fermer</button>';
+  if (acct.user) { acct.alertes = Object.assign({}, acct.alertes, { hebdo: false }); renderAccount(); }
+}
 const OTP_TYPES = ["email", "signup", "magiclink", "invite", "email_change"];
 function acctBoot() {
+  desaboBoot();
   const h = location.hash || "";
   // Lien des e-mails de connexion : https://bonplein.paceapp.fr/?token_hash=…&type=email
   const q = new URLSearchParams(location.search);
@@ -1999,6 +2043,7 @@ function acctBoot() {
 /* ---------- Réglages ---------- */
 document.addEventListener("click", async e => {
   if (await acctClick(e)) return;
+  if (e.target.closest("#desaboGo")) { desaboGo(); return; }
   const pl = e.target.closest("[data-plein]");
   if (pl) { openPlein(pl.dataset.plein); return; }
   const cl = e.target.closest("[data-close]");
