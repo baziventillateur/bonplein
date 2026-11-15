@@ -154,6 +154,26 @@ main{padding:0 10px 24px}
 
 .sechead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:14px 0 5px;flex-wrap:wrap}
 .sechead h3{margin:0;font:700 1rem/1.2 var(--sans)}
+.seghead{display:flex;gap:6px;flex-wrap:wrap}
+.mapslot{margin:4px 0 8px}
+.mapslot.loading-map{min-height:min(62vh,520px);border-radius:var(--r-s);background:var(--line)}
+.map{height:min(62vh,520px);min-height:320px;border-radius:var(--r-s);border:1.5px solid var(--line);overflow:hidden;background:#E6E9EA;z-index:0}
+.pm{background:none;border:0}
+.pm-b{position:absolute;left:0;bottom:7px;transform:translateX(-50%);display:block;padding:3px 6px;border-radius:6px;background:#FFFFFF;color:#1D2731;font:700 .8125rem/1.1 'Barlow Condensed',Barlow,Arial,sans-serif;white-space:nowrap;box-shadow:0 1px 3px rgba(29,39,49,.35);border:1.5px solid #1D2731;cursor:pointer}
+.pm-b::after{content:"";position:absolute;left:50%;bottom:-7px;margin-left:-6px;border:6px solid transparent;border-top-color:#1D2731;border-bottom:0}
+.pm-b.top{background:#FFF4D1}
+.pm-b.best{background:#F4C542;font-size:.9375rem;padding:4px 8px}
+.leaflet-popup-content{margin:12px 14px;font:inherit;color:#1D2731}
+.leaflet-popup-content .pop p{margin:0 0 6px}
+.pop-p{font:700 1.75rem/1 'Barlow Condensed',Barlow,Arial,sans-serif}
+.pop-p .unit{font:500 .8125rem Barlow,Arial,sans-serif;color:#5D6A74}
+.pop-a{font-size:.875rem;line-height:1.35}
+.pop-m{font-size:.8125rem;color:#5D6A74}
+.pop .go{margin:8px 0 6px}
+.leaflet-container .pop .go a{background:#1D2731;color:#F2F5F6}
+.leaflet-container .pop .go a.alt{background:transparent;color:#1D2731;border:1.5px solid #D6DCDF}
+.leaflet-container .pop .linkbtn{color:#1D2731;font-size:.8125rem}
+.leaflet-container{font-family:Barlow,Arial,sans-serif}
 .sechead .seg button{height:28px;font-size:.75rem;padding:0 8px}
 .sechead .hint{font-size:.75rem;color:var(--muted)}
 
@@ -453,7 +473,7 @@ dialog.center[open]{animation:pop .35s cubic-bezier(.2,1.4,.4,1)}
   <p>Bonplein n’est pas un service de l’État. Prix, ruptures et horaires : flux instantané « Prix des carburants en France » du ministère de l'Économie (prix-carburants.gouv.fr), actualisé toutes les 10 minutes. Adresses : Géoplateforme IGN.</p>
   <p>Ouvert ou fermé est calculé à partir des horaires déclarés par chaque station. Les ruptures sont déclarées par les stations elles-mêmes. L'évolution des prix vient d'un relevé fait chaque lundi. Votre progression (XP, badges, économies) reste sur cet appareil. Si vous créez un compte, votre e-mail, votre progression, vos réglages et vos stations favorites sont enregistrés chez Supabase, dans l'Union européenne ; vous pouvez tout supprimer depuis « Ma progression ».</p>
   <p><a href="confidentialite.html">Confidentialité</a><span aria-hidden="true"> | </span><a href="conditions.html">Conditions d’utilisation</a><span aria-hidden="true"> | </span><a href="conditions.html#mentions">Mentions légales</a></p>
-  <p class="ver" id="ver">v1.109 du 15/11/2026 à 23h23</p>
+  <p class="ver" id="ver">v1.110 du 15/11/2026 à 23h28</p>
 </footer>
 
 <div id="toast" role="status" aria-live="polite" hidden></div>
@@ -545,6 +565,7 @@ const state = {
   hideClosed: store.get("hideClosed", true),
   freshOnly: store.get("freshOnly", true),
   sort: "prix",
+  view: "list",
   stations: [],
   fetchedAt: null,
   truncated: false,
@@ -1020,13 +1041,18 @@ function renderResults() {
     html += citiesHTML(c, F);
 
     html += '<div class="sechead" id="stationsHead"><h3>' + (c.cityName ? "Stations à " + esc(c.cityName) : "Toutes les stations") + "</h3>" +
-      '<div class="seg" role="radiogroup" aria-label="Trier">' +
+      '<div class="seghead">' +
+      (state.view === "list" ? '<div class="seg" role="radiogroup" aria-label="Trier">' +
       '<button type="button" role="radio" data-sort="prix" aria-checked="' + (state.sort === "prix") + '">Moins chères</button>' +
       '<button type="button" role="radio" data-sort="dist" aria-checked="' + (state.sort === "dist") + '">Plus proches</button>' +
-      "</div></div>" +
+      "</div>" : "") +
+      '<div class="seg" role="radiogroup" aria-label="Affichage">' +
+      '<button type="button" role="radio" data-view="list" aria-checked="' + (state.view === "list") + '">Liste</button>' +
+      '<button type="button" role="radio" data-view="map" aria-checked="' + (state.view === "map") + '">Carte</button>' +
+      "</div></div></div>" +
       (c.cityName ? '<p class="cmore"><button type="button" class="linkbtn" data-act="clearcity">Voir les stations de toutes les villes</button></p>' : "");
 
-    html += '<ul class="list">' + c.list.map(r => rowHTML(r, c, F)).join("") + "</ul>";
+    html += state.view === "map" ? '<div id="mapSlot" class="mapslot"></div>' : '<ul class="list">' + c.list.map(r => rowHTML(r, c, F)).join("") + "</ul>";
   }
 
   if (c.ruptures.length) {
@@ -1039,6 +1065,86 @@ function renderResults() {
 
   html += '<div class="fetched">Données récupérées à ' + fmtHM(parisNow(state.fetchedAt).min) + ' <button type="button" data-act="refresh">Actualiser</button></div>';
   el.innerHTML = html;
+  if (state.view === "map" && c.list.length) showMap(c);
+}
+
+/* ---------- Carte (chargée seulement quand on touche « Carte ») ---------- */
+const IGN_TILES = "https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&STYLE=normal&TILEMATRIXSET=PM&FORMAT=image/png&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}";
+const mapS = { lib: null, el: null, map: null, layer: null, sig: "", rows: new Map(), lastC: null };
+function leafletLib() {
+  if (!mapS.lib) mapS.lib = new Promise((res, rej) => {
+    if (window.L && window.L.map) return res();
+    const css = document.createElement("link");
+    css.rel = "stylesheet"; css.href = "vendor/leaflet/leaflet.css";
+    document.head.appendChild(css);
+    const js = document.createElement("script");
+    js.src = "vendor/leaflet/leaflet.js";
+    js.onload = () => res();
+    js.onerror = () => { mapS.lib = null; rej(new Error("lib")); };
+    document.head.appendChild(js);
+  });
+  return mapS.lib;
+}
+async function showMap(c) {
+  const slot = $("#mapSlot");
+  if (!slot) return;
+  mapS.lastC = c;
+  if (!mapS.el) {
+    mapS.el = document.createElement("div");
+    mapS.el.className = "map";
+    mapS.el.setAttribute("role", "region");
+    mapS.el.setAttribute("aria-label", "Carte des stations");
+  }
+  slot.appendChild(mapS.el);
+  if (!mapS.map) {
+    slot.classList.add("loading-map");
+    try { await leafletLib(); } catch (e) {
+      slot.innerHTML = '<p class="summary hid">La carte n’a pas pu se charger. Vérifiez la connexion internet, ou revenez à la liste.</p>';
+      return;
+    }
+    slot.classList.remove("loading-map");
+    if (!document.body.contains(mapS.el)) return;
+    mapS.map = L.map(mapS.el, { zoomControl: true, attributionControl: true });
+    L.tileLayer(IGN_TILES, { minZoom: 6, maxZoom: 19, attribution: "© IGN" }).addTo(mapS.map);
+    mapS.map.attributionControl.setPrefix("");
+    mapS.layer = L.layerGroup().addTo(mapS.map);
+  }
+  mapS.map.invalidateSize();
+  drawMarkers(mapS.lastC);
+}
+function drawMarkers(c) {
+  if (!mapS.map || !c) return;
+  const sig = state.fuel + "|" + c.list.map(r => r.s.id + ":" + r.f.price).join(",") + "|" + (state.place ? state.place.lat + "," + state.place.lon : "");
+  mapS.rows = new Map(c.list.map(r => [r.s.id, r]));
+  if (sig === mapS.sig) return;
+  const refit = sig.split("|")[1] !== mapS.sig.split("|")[1] || sig.split("|")[2] !== mapS.sig.split("|")[2];
+  mapS.sig = sig;
+  mapS.layer.clearLayers();
+  const pts = [];
+  c.list.forEach(r => {
+    if (!isFinite(r.s.lat) || !isFinite(r.s.lon)) return;
+    const cls = r.rank === 1 ? " best" : (r.rank <= 3 && c.count >= 3 ? " top" : "");
+    const icon = L.divIcon({ className: "pm", iconSize: [0, 0], html: '<span class="pm-b' + cls + '">' + fmtPrice(r.f.price) + "</span>" });
+    const m = L.marker([r.s.lat, r.s.lon], { icon, title: r.s.adresse + ", " + fmtPrice(r.f.price) + " €", keyboard: true, zIndexOffset: (c.count - r.rank) * 10 });
+    m.bindPopup(() => popupHTML(r.s.id), { maxWidth: 280, minWidth: 220, autoPanPadding: [12, 12] });
+    m.addTo(mapS.layer);
+    pts.push([r.s.lat, r.s.lon]);
+  });
+  if (state.place) {
+    L.circleMarker([state.place.lat, state.place.lon], { radius: 7, weight: 3, color: "#FFFFFF", fillColor: "#2F6FDE", fillOpacity: 1, interactive: false }).addTo(mapS.layer);
+    pts.push([state.place.lat, state.place.lon]);
+  }
+  if (refit && pts.length) mapS.map.fitBounds(pts, { padding: [36, 36], maxZoom: 15 });
+}
+function popupHTML(id) {
+  const r = mapS.rows.get(id), c = mapS.lastC;
+  if (!r || !c) return "";
+  const delta = r.f.price - c.min;
+  return '<div class="pop"><p class="pop-p">' + priceHTML(r.f.price) + ' <span class="unit">€/L</span></p>' +
+    '<p class="pop-a"><b>' + esc(r.s.adresse) + "</b><br>" + esc(r.s.cityName) + ", " + fmtDist(r.s.dist) + "</p>" +
+    '<p class="pop-m"><span class="st ' + r.open.state + '">' + esc(r.open.text) + "</span> " + (delta < 0.0005 ? "Meilleur prix" : "+" + fmtPrice(delta) + " € par rapport à la moins chère") + "</p>" +
+    linksHTML(r.s) +
+    '<button type="button" class="linkbtn" data-maprow="' + esc(id) + '">Voir le détail dans la liste</button></div>';
 }
 
 function citiesHTML(c, F) {
@@ -2121,6 +2227,16 @@ document.addEventListener("click", async e => {
   if (rad) { state.radius = +rad.dataset.radius; store.set("radius", state.radius); renderControls(); load(); render(); return; }
   const sort = e.target.closest("[data-sort]");
   if (sort) { state.sort = sort.dataset.sort; render(); return; }
+  const view = e.target.closest("[data-view]");
+  if (view) { state.view = view.dataset.view; render(); return; }
+  const mrow = e.target.closest("[data-maprow]");
+  if (mrow) {
+    const id = mrow.dataset.maprow;
+    state.view = "list"; state.expanded.add(id); render();
+    const b = document.querySelector('[data-row="' + CSS.escape(id) + '"]');
+    if (b) { b.scrollIntoView({ block: "center" }); b.focus({ preventScroll: true }); }
+    return;
+  }
   const row = e.target.closest("[data-row]");
   if (row) { const id = row.dataset.row; state.expanded.has(id) ? state.expanded.delete(id) : state.expanded.add(id); render(); const b = document.querySelector('[data-row="' + CSS.escape(id) + '"]'); if (b) b.focus({ preventScroll: true }); return; }
   const city = e.target.closest("[data-city]");
