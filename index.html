@@ -154,6 +154,58 @@ main{padding:0 10px 24px}
 .c-delta{font-size:.75rem;font-weight:600;color:var(--muted);text-align:right;white-space:nowrap}
 .c-delta.best{color:var(--vert)}
 .cmore{margin:6px 1px 0;font-size:.8125rem}
+.cfoot{display:flex;align-items:center;gap:8px;margin:6px 1px 0;font-size:.8125rem}
+.natbtn{display:inline-flex;align-items:center;gap:5px;height:26px;padding:0 9px 0 7px;margin-left:auto;border:1.5px solid var(--line);border-radius:999px;background:transparent;color:var(--muted);font-weight:600;font-size:.75rem;cursor:pointer;white-space:nowrap}
+.natbtn svg{width:13px;height:13px}
+.natbtn:hover{color:var(--ink);border-color:var(--ink)}
+
+/* Classement France */
+.nat-fuels{margin:0 -14px;padding:1px 14px 8px}
+.nat-fuels .fuel{height:30px}
+.nat-side{display:flex}
+.nat-side button{flex:1;height:32px}
+.nat-lead{margin:12px 0 0;font-size:.8125rem;color:var(--muted);text-align:center}
+.nat-lead b{display:block;color:var(--ink);font:700 1.125rem/1.2 var(--cond)}
+.podium{list-style:none;margin:8px 0 0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;align-items:end;border-bottom:3px solid var(--bitume)}
+.podium li{grid-row:1;min-width:0}
+.podium .p1{grid-column:2}
+.podium .p2{grid-column:1}
+.podium .p3{grid-column:3}
+.pd{width:100%;display:flex;flex-direction:column;align-items:center;gap:1px;border:0;background:none;padding:0;cursor:pointer;text-align:center;color:inherit}
+.medal.big{width:26px;height:26px;font-size:.875rem;margin:0 0 3px;vertical-align:0}
+.pd-city{font-weight:700;font-size:.875rem;line-height:1.15;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;max-width:100%}
+.pd-meta{font-size:.6875rem;color:var(--muted)}
+.pd-totem{position:relative;width:100%;margin-top:5px;background:var(--bitume);border-radius:8px 8px 0 0;display:flex;flex-direction:column;align-items:center;padding:8px 2px 0;color:#B9C4CB}
+.p1 .pd-totem{height:100px}
+.p2 .pd-totem{height:78px}
+.p3 .pd-totem{height:62px}
+.pd-price{font:700 1.5rem/1 var(--cond);color:var(--totem)}
+.p1 .pd-price{font-size:1.875rem}
+.pd-price sup{font-size:.55em}
+.pd-delta{font-size:.6875rem;font-weight:600;margin-top:3px}
+.dear .pd-price{color:#FF9C88}
+.pd:hover .pd-city{text-decoration:underline;text-underline-offset:2px}
+@media (prefers-color-scheme:dark){.pd-totem{background:#26323D}.podium{border-color:#26323D}}
+@keyframes rise{from{clip-path:inset(100% 0 0 0)}to{clip-path:inset(0 0 0 0)}}
+.podium.anim .pd-totem{animation:rise .55s cubic-bezier(.2,.8,.3,1) both}
+.podium.anim .p2 .pd-totem{animation-delay:.12s}
+.podium.anim .p1 .pd-totem{animation-delay:.26s}
+@media (prefers-reduced-motion:reduce){.podium.anim .pd-totem{animation:none}}
+.nat-hint{margin:6px 0 0;font-size:.6875rem;color:var(--muted);text-align:center}
+.nat-me{margin:14px 0 0;padding:10px 12px;border-radius:var(--r-m);background:var(--beton)}
+.sheet .nat-me h3{margin:0 0 6px}
+.nat-me-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.nat-me-top b{font-size:.9375rem}
+.nat-rank{font:700 1.5rem/1 var(--cond);white-space:nowrap}
+.nat-rank sup{font-size:.55em}
+.nat-rank small{font:500 .75rem/1 var(--sans);color:var(--muted)}
+.nat-gauge{height:5px;margin:8px 0 3px}
+.nat-gauge i{width:12px;height:12px;margin:-6px 0 0 -6px}
+.nat-ends{display:flex;justify-content:space-between;font-size:.6875rem;color:var(--muted)}
+.nat-me p{margin:6px 0 0;font-size:.8125rem}
+.nat-tier{font-weight:700}
+.nat-gap{margin:12px 0 0;font-size:.8125rem}
+.nat-note{margin:10px 0 0;font-size:.6875rem;color:var(--muted)}
 
 /* Liste des stations */
 .list{list-style:none;margin:0;padding:0;background:var(--surface);border-radius:var(--r-m);border:1px solid var(--line);overflow:hidden}
@@ -368,6 +420,16 @@ dialog.center[open]{animation:pop .35s cubic-bezier(.2,1.4,.4,1)}
     <button type="button" class="sheet-x" data-close="profileDlg" aria-label="Fermer">×</button>
     <h2 id="profileTitle">Ma progression</h2>
     <div id="profileBody"></div>
+  </div>
+</dialog>
+
+<dialog id="natDlg" class="sheet" aria-labelledby="natTitle">
+  <div class="sheet-in">
+    <button type="button" class="sheet-x" data-close="natDlg" aria-label="Fermer">×</button>
+    <h2 id="natTitle">Classement France</h2>
+    <div class="fuels nat-fuels" role="radiogroup" aria-label="Carburant du classement" id="natFuels"></div>
+    <div class="seg nat-side" role="radiogroup" aria-label="Classement" id="natSide"></div>
+    <div id="natBody" aria-live="polite"></div>
   </div>
 </dialog>
 
@@ -678,6 +740,8 @@ async function geocode(q, limit = 5) {
   return (j.features || []).filter(f => f.geometry && f.geometry.coordinates).map(f => ({
     label: f.properties.label || q,
     context: f.properties.context || "",
+    city: f.properties.city || "",
+    postcode: f.properties.postcode || "",
     lat: f.geometry.coordinates[1],
     lon: f.geometry.coordinates[0]
   }));
@@ -686,7 +750,7 @@ async function reverse(lat, lon) {
   try {
     const j = await getJSON(API_GEO + "/reverse?lon=" + lon + "&lat=" + lat + "&limit=1", "geo");
     const f = (j.features || [])[0];
-    return f ? f.properties.label : null;
+    return f ? { label: f.properties.label, city: f.properties.city || "", postcode: f.properties.postcode || "" } : null;
   } catch (e) { return null; }
 }
 
@@ -731,7 +795,7 @@ async function load() {
 }
 
 function setPlace(p) {
-  state.place = { label: p.label, lat: p.lat, lon: p.lon };
+  state.place = { label: p.label, lat: p.lat, lon: p.lon, city: p.city || "", postcode: p.postcode || "" };
   store.set("place", state.place);
   $("#q").value = p.label;
   state.expanded.clear();
@@ -912,7 +976,8 @@ function citiesHTML(c, F) {
   const n = c.cities.length;
   if (n < 2) {
     const next = RADII.find(r => r > state.radius);
-    return next ? '<p class="summary hid">Une seule ville a des stations dans ce rayon. <button type="button" class="linkbtn" data-radius="' + next + '">Élargir à ' + next + " km pour comparer les villes voisines</button></p>" : "";
+    return (next ? '<p class="summary hid">Une seule ville a des stations dans ce rayon. <button type="button" class="linkbtn" data-radius="' + next + '">Élargir à ' + next + " km pour comparer les villes voisines</button></p>" : "") +
+      '<div class="cfoot">' + natBtnHTML() + "</div>";
   }
   const shown = state.allCities ? c.cities : c.cities.slice(0, 4);
   const best = c.cities[0].min;
@@ -926,8 +991,11 @@ function citiesHTML(c, F) {
         '<span class="c-delta' + (d < 0.0005 ? " best" : "") + '">' + (d < 0.0005 ? "La moins chère" : "+" + fmtPrice(d) + " €") + "</span>" +
         "</button></li>";
     }).join("") + "</ul>";
-  if (n > 4) h += '<p class="cmore"><button type="button" class="linkbtn" data-act="allcities">' + (state.allCities ? "Afficher les 4 premières" : "Voir les " + n + " villes") + "</button></p>";
+  h += '<div class="cfoot">' + (n > 4 ? '<button type="button" class="linkbtn" data-act="allcities">' + (state.allCities ? "Afficher les 4 premières" : "Voir les " + n + " villes") + "</button>" : "") + natBtnHTML() + "</div>";
   return h;
+}
+function natBtnHTML() {
+  return '<button type="button" class="natbtn" data-act="national"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9 5h6v16H9zM2 10h6v11H2zM16 13h6v8h-6z"/></svg>Classement France</button>';
 }
 
 function hiddenText(h) {
@@ -1064,9 +1132,9 @@ function locate(auto) {
   renderStatus();
   navigator.geolocation.getCurrentPosition(async pos => {
     const lat = pos.coords.latitude, lon = pos.coords.longitude;
-    const label = (await reverse(lat, lon)) || "Ma position";
+    const rv = await reverse(lat, lon);
     state.locating = false;
-    setPlace({ label, lat, lon, geo: true });
+    setPlace({ label: (rv && rv.label) || "Ma position", city: rv ? rv.city : "", postcode: rv ? rv.postcode : "", lat, lon, geo: true });
   }, err => {
     state.locating = false;
     const body = err && err.code === 1
@@ -1098,9 +1166,10 @@ const BADGES = [
   { id: "explorer", icon: "🧭", name: "Explorateur",         desc: "Comparer 5 villes différentes." },
   { id: "streak3",  icon: "🔥", name: "Régulier",            desc: "Un plein enregistré 3 semaines de suite." },
   { id: "pleins10", icon: "🎯", name: "Fidèle",              desc: "10 pleins enregistrés." },
-  { id: "early",    icon: "🌅", name: "Lève-tôt",            desc: "Chercher une station avant 7h." }
+  { id: "early",    icon: "🌅", name: "Lève-tôt",            desc: "Chercher une station avant 7h." },
+  { id: "france",   icon: "🗺️", name: "Tour de France",      desc: "Consulter le classement national des villes." }
 ];
-const game = Object.assign({ xp: 0, saved: 0, pleins: [], badges: {}, cities: [], lastDay: null, weekDone: null }, store.get("game", {}) || {});
+const game = Object.assign({ xp: 0, saved: 0, pleins: [], badges: {}, cities: [], lastDay: null, weekDone: null, natSeen: false }, store.get("game", {}) || {});
 function saveGame() { store.set("game", game); }
 function dayKey(d = new Date()) {
   try { return new Intl.DateTimeFormat("fr-CA", { timeZone: "Europe/Paris", year: "numeric", month: "2-digit", day: "2-digit" }).format(d); }
@@ -1150,7 +1219,8 @@ function checkBadges(ctx) {
     explorer: () => game.cities.length >= 5,
     streak3: () => streakWeeks() >= 3,
     pleins10: () => game.pleins.length >= 10,
-    early: () => !!ctx.early
+    early: () => !!ctx.early,
+    france: () => !!game.natSeen
   };
   const won = [];
   for (const b of BADGES) if (!game.badges[b.id] && tests[b.id]()) { game.badges[b.id] = Date.now(); won.push(b); }
@@ -1307,6 +1377,249 @@ function onLoaded() {
   else award(0, null, { early });
 }
 
+/* ---------- Classement France ---------- */
+const API_EXPORT = API_PRIX.replace(/records$/, "exports/json");
+const NAT_MIN = 2;                 /* stations minimum pour classer une ville */
+const NAT_TTL = 10 * 60000;        /* le flux change toutes les 10 minutes */
+const NAT_RANGE = { e85: [0.3, 2.5], gplc: [0.3, 2.5] };  /* écarte les prix saisis par erreur */
+const nat = { fuel: "gazole", side: "cheap", cache: {}, req: 0, loading: false, error: null };
+
+function depOf(cp) {
+  cp = String(cp || "").trim();
+  if (/^20\d{3}$/.test(cp)) return +cp < 20200 ? "2A" : "2B";
+  return cp.slice(0, 2) || "?";
+}
+function natName(v) { return cityClean(v).replace(/^(Paris|Lyon|Marseille)(\s+\d.*|\s.*arrondissement.*)$/i, "$1"); }
+const natKey = (ville, cp) => cityKey(natName(ville)) + "|" + depOf(cp);
+function natWhere(F, withDate) {
+  const r = NAT_RANGE[F] || [1, 4];
+  let w = F + "_prix >= " + r[0] + " and " + F + "_prix <= " + r[1];
+  if (withDate) w += " and " + F + "_maj >= date'" + dayKey(new Date(Date.now() - STALE_DAYS * 864e5)) + "'";
+  return w;
+}
+
+async function natFetch(F) {
+  const enc = encodeURIComponent;
+  const sel = "ville,cp,pop,avg(" + F + "_prix) as prix,count(*) as n";
+  const grp = "&group_by=" + enc("ville,cp,pop");
+  let err = null;
+  for (const withDate of [true, false]) {
+    const w = natWhere(F, withDate);
+    /* 1. Export : toutes les villes de France en une requête */
+    try {
+      const j = await getJSON(API_EXPORT + "?select=" + enc(sel) + "&where=" + enc(w) + grp, "nat");
+      const rows = Array.isArray(j) ? j : (j && j.results);
+      if (Array.isArray(rows)) return natBuild(rows, F, { full: true });
+    } catch (e) { err = e; if (e.status === 429) throw e; }
+    /* 2. Repli : les extrêmes seulement (300 moins chères, 300 plus chères) */
+    try {
+      const base = API_PRIX + "?select=" + enc(sel) + "&where=" + enc(w) + grp + "&limit=100";
+      const urls = [];
+      for (const dir of ["asc", "desc"]) for (let o = 0; o < 300; o += 100) urls.push(base + "&order_by=" + enc("avg(" + F + "_prix) " + dir) + "&offset=" + o);
+      urls.push(API_PRIX + "?select=" + enc("pop,avg(" + F + "_prix) as prix,count(*) as n") + "&where=" + enc(w) + "&group_by=pop&limit=20");
+      const res = await Promise.all(urls.map(u => getJSON(u, "nat")));
+      const totals = res.pop().results || [];
+      return natBuild(res.flatMap(r => r.results || []), F, { full: false, totals });
+    } catch (e) { err = e; if (e.status === 429) throw e; }
+  }
+  throw err;
+}
+
+function natBuild(rows, F, opt) {
+  const groups = new Map(), seen = new Set();
+  const priceOf = r => { let p = num(r.prix); if (p != null && p > 100) p /= 1000; return p; };
+  let sum = 0, cnt = 0;
+  for (const r of rows) {
+    if (!r) continue;
+    const cp = String(r.cp == null ? "" : r.cp).trim();
+    const raw = r.ville + "|" + cp + "|" + r.pop;
+    if (seen.has(raw)) continue;
+    seen.add(raw);
+    if (/^9[78]/.test(cp) || String(r.pop || "").toUpperCase() === "A") continue;  /* outre-mer, autoroutes */
+    const p = priceOf(r), n = Math.round(num(r.n) || 0);
+    if (p == null || n < 1) continue;
+    const name = natName(r.ville), dep = depOf(cp), k = cityKey(name) + "|" + dep;
+    let g = groups.get(k);
+    if (!g) groups.set(k, g = { key: k, dep, cp, sum: 0, n: 0, names: new Map() });
+    g.sum += p * n; g.n += n;
+    g.names.set(name, (g.names.get(name) || 0) + n);
+    sum += p * n; cnt += n;
+  }
+  const all = [...groups.values()].map(g => ({
+    key: g.key, dep: g.dep, cp: g.cp, n: g.n, avg: g.sum / g.n,
+    name: [...g.names.entries()].sort((a, b) => b[1] - a[1])[0][0]
+  }));
+  const ranked = all.filter(g => g.n >= NAT_MIN).sort((a, b) => a.avg - b.avg || b.n - a.n);
+  ranked.forEach((g, i) => { g.rank = i + 1; });
+  let avg = cnt ? sum / cnt : null, stations = cnt;
+  if (!opt.full) {
+    let s2 = 0, c2 = 0;
+    for (const t of opt.totals || []) {
+      if (String(t.pop || "").toUpperCase() === "A") continue;
+      const p = priceOf(t), n = num(t.n) || 0;
+      if (p != null && n) { s2 += p * n; c2 += n; }
+    }
+    avg = c2 ? s2 / c2 : null; stations = c2;
+  }
+  return {
+    full: opt.full, avg, stations, ranked,
+    total: opt.full ? ranked.length : null,
+    cheap: ranked.slice(0, 3),
+    dear: ranked.slice(-3).reverse(),
+    byKey: new Map(all.map(g => [g.key, g]))
+  };
+}
+
+/* Ville de l'adresse cherchée : celle du géocodage, sinon celle de la station la plus proche */
+function myCityRef() {
+  const p = state.place;
+  if (p && p.city && p.postcode) return { key: natKey(p.city, p.postcode), name: natName(p.city), dep: depOf(p.postcode) };
+  const near = state.stations.slice().sort((a, b) => a.dist - b.dist)[0];
+  if (near && near.dist < 3 && near.cp) return { key: natKey(near.ville, near.cp), name: natName(near.ville), dep: depOf(near.cp) };
+  return null;
+}
+
+function openNational() {
+  nat.fuel = state.fuel;
+  nat.side = "cheap";
+  renderNatControls();
+  openDlg("natDlg");
+  loadNat(false);
+}
+async function loadNat(force) {
+  const F = nat.fuel, my = ++nat.req;
+  const c = nat.cache[F];
+  if (!force && c && Date.now() - c.at < NAT_TTL) { nat.loading = false; nat.error = null; renderNat(true); return; }
+  nat.loading = true; nat.error = null;
+  renderNat(false);
+  try {
+    const data = await natFetch(F);
+    nat.cache[F] = { at: Date.now(), data };
+    if (my !== nat.req) return;
+    nat.loading = false;
+    renderNat(true);
+    if (!game.natSeen && data.ranked.length) { game.natSeen = true; award(0, null); }
+  } catch (e) {
+    if (my !== nat.req) return;
+    nat.loading = false; nat.error = e;
+    renderNat(false);
+  }
+}
+
+function renderNatControls() {
+  $("#natFuels").innerHTML = FUELS.map(F =>
+    '<button type="button" class="fuel" role="radio" data-natfuel="' + F.key + '" aria-checked="' + (F.key === nat.fuel) + '" aria-label="' + esc(F.title) + '">' +
+    '<span class="badge ' + F.shape + '" aria-hidden="true"><span>' + F.label + "</span></span>" +
+    '<span class="fname">' + esc(F.title) + "</span></button>").join("");
+  $("#natSide").innerHTML =
+    '<button type="button" role="radio" data-natside="cheap" aria-checked="' + (nat.side === "cheap") + '">Les moins chères</button>' +
+    '<button type="button" role="radio" data-natside="dear" aria-checked="' + (nat.side === "dear") + '">Les plus chères</button>';
+}
+
+function renderNat(anim) {
+  const el = $("#natBody");
+  const F = FUEL[nat.fuel];
+  if (nat.loading) {
+    el.innerHTML = '<p class="status loading"><span class="spin" aria-hidden="true"></span>Calcul du classement sur toute la France…</p>';
+    return;
+  }
+  if (nat.error) {
+    const e = nat.error;
+    el.innerHTML = '<div class="err" style="margin-top:12px"><strong>' +
+      (e.status === 429 ? "Trop de demandes envoyées." : e.status === 0 ? "Le serveur ne répond pas." : "Le classement n'a pas pu être calculé (" + esc(e.status) + ").") +
+      "</strong>" + (e.status === 429 ? "Réessayez dans une minute." : "Vérifiez la connexion, puis réessayez.") +
+      '</div><div class="sheet-actions"><button type="button" class="sbtn" data-act="natretry">Réessayer</button></div>';
+    return;
+  }
+  const c = nat.cache[nat.fuel];
+  if (!c) { el.innerHTML = ""; return; }
+  const d = c.data;
+  if (d.ranked.length < 1) {
+    el.innerHTML = '<p class="nat-lead">Trop peu de stations déclarent un prix récent ' + esc(F.du) + " pour établir un classement.</p>";
+    return;
+  }
+  const dear = nat.side === "dear";
+  const podium = dear ? d.dear : d.cheap;
+  const L = Math.max(0, num(state.tank) || 0);
+  let h = '<p class="nat-lead"><b>' + (dear ? "Le podium qui pique" : "Le podium des bons plans") + "</b>" +
+    (dear ? "Les villes où " + esc(F.du) + " coûte le plus cher" : "Les villes où " + esc(F.du) + " coûte le moins cher") + "</p>";
+  h += '<ol class="podium' + (dear ? " dear" : "") + (anim ? " anim" : "") + '">' + podium.map((g, i) => {
+    const delta = d.avg != null ? g.avg - d.avg : null;
+    return '<li class="p' + (i + 1) + '"><button type="button" class="pd" data-natcity="' + esc(g.key) + '" aria-label="' +
+      esc((i + 1) + (i ? "e" : "re") + " : " + g.name + " (" + g.dep + "), " + fmtPrice(g.avg) + " euros le litre en moyenne. Voir ses stations") + '">' +
+      '<span class="medal big m' + (i + 1) + '" aria-hidden="true">' + (i + 1) + "</span>" +
+      '<span class="pd-city">' + esc(g.name) + "</span>" +
+      '<span class="pd-meta">' + esc(g.dep) + ", " + g.n + " stations</span>" +
+      '<span class="pd-totem"><span class="pd-price">' + priceHTML(g.avg) + "</span>" +
+      (delta != null ? '<span class="pd-delta">' + (delta < 0 ? "−" : "+") + fmtPrice(Math.abs(delta)) + " €</span>" : "") +
+      "</span></button></li>";
+  }).join("") + "</ol>";
+  h += '<p class="nat-hint">Prix moyen par litre. Écart avec la moyenne France sous le prix. Touchez une ville pour voir ses stations.</p>';
+
+  /* Et votre ville ? */
+  const me = myCityRef();
+  const g = me && d.byKey.get(me.key);
+  if (g) {
+    h += '<div class="nat-me"><h3>Et votre ville ?</h3>';
+    if (g.rank && d.total) {
+      const pct = d.total > 1 ? (g.rank - 1) / (d.total - 1) : 0;
+      const share = g.rank / d.total;
+      let tier, cls = "";
+      if (share <= .05) { tier = "Dans le top 5 % des villes les moins chères"; cls = "plus"; }
+      else if (share <= .2) { tier = "Dans les 20 % de villes les moins chères"; cls = "plus"; }
+      else if (share <= .4) { tier = "Mieux placée que la plupart des villes"; cls = "plus"; }
+      else if (share <= .6) { tier = "Dans la moyenne des villes"; }
+      else if (share <= .8) { tier = "Plus chère que la plupart des villes"; cls = "minus"; }
+      else { tier = "Dans les 20 % de villes les plus chères"; cls = "minus"; }
+      h += '<div class="nat-me-top"><b>' + esc(g.name) + " (" + esc(g.dep) + ")</b>" +
+        '<span class="nat-rank">' + g.rank.toLocaleString("fr-FR") + "<sup>" + (g.rank === 1 ? "re" : "e") + "</sup> <small>sur " + d.total.toLocaleString("fr-FR") + "</small></span></div>" +
+        '<span class="gauge nat-gauge" aria-hidden="true"><i style="left:' + (pct * 100).toFixed(1) + '%"></i></span>' +
+        '<div class="nat-ends"><span>La moins chère</span><span>La plus chère</span></div>' +
+        '<p class="nat-tier ' + cls + '">' + tier + ".</p>";
+    } else {
+      h += '<div class="nat-me-top"><b>' + esc(g.name) + " (" + esc(g.dep) + ")</b></div>" +
+        (g.n < NAT_MIN ? "<p>Une seule station y déclare un prix récent : la ville n'entre pas dans le classement, qui demande au moins " + NAT_MIN + " stations.</p>" : "");
+    }
+    if (d.avg != null) {
+      const diff = g.avg - d.avg;
+      h += "<p>Prix moyen ici : <b>" + fmtPrice(g.avg) + " €</b>, " +
+        (Math.abs(diff) < 0.0005 ? "pile la moyenne France." :
+          "soit " + fmtPrice(Math.abs(diff)) + " € de " + (diff < 0 ? "moins" : "plus") + " que la moyenne France" +
+          (L > 0 ? ", " + euro(Math.abs(diff) * L) + (diff < 0 ? " économisés" : " de plus") + " sur un plein de " + L + " L." : ".")) + "</p>";
+    }
+    h += "</div>";
+  }
+
+  /* Écart national */
+  if (d.cheap.length && d.dear.length && d.avg != null) {
+    const gap = d.dear[0].avg - d.cheap[0].avg;
+    h += '<p class="nat-gap">Moyenne France : <b>' + fmtPrice(d.avg) + " €/L</b> sur " + d.stations.toLocaleString("fr-FR") + " stations. " +
+      (gap > 0.0005 ? "Entre " + esc(d.cheap[0].name) + " et " + esc(d.dear[0].name) + ", " + fmtPrice(gap) + " € d'écart par litre" +
+        (L > 0 ? ", soit <b>" + euro(gap * L) + "</b> sur un plein de " + L + " L." : ".") : "") + "</p>";
+  }
+  h += '<p class="nat-note">Moyenne des prix déclarés ' + (STALE_DAYS ? "depuis moins de " + STALE_DAYS + " jours" : "") +
+    ", hors autoroutes et outre-mer, pour les villes d'au moins " + NAT_MIN + " stations. Flux officiel actualisé toutes les 10 minutes." +
+    (d.full ? "" : " Classement partiel : seules les villes aux extrêmes ont pu être chargées.") + "</p>";
+  el.innerHTML = h;
+}
+
+async function goNatCity(key) {
+  const c = nat.cache[nat.fuel];
+  const g = c && c.data.byKey.get(key);
+  if (!g) return;
+  closeDlg("natDlg");
+  if (state.fuel !== nat.fuel) { state.fuel = nat.fuel; store.set("fuel", state.fuel); state.expanded.clear(); renderControls(); }
+  window.scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  state.locating = "Localisation de " + g.name + "…"; state.error = null; state.notice = null;
+  renderStatus();
+  try {
+    const res = await geocode(g.name + " " + g.cp, 1);
+    state.locating = false;
+    if (!res.length) { setNotice("err", "Ville introuvable.", "Tapez « " + g.name + " » dans la recherche."); return; }
+    setPlace(res[0]);
+  } catch (e) { state.locating = false; state.error = e; render(); }
+}
+
 /* ---------- Réglages ---------- */
 document.addEventListener("click", e => {
   const pl = e.target.closest("[data-plein]");
@@ -1317,11 +1630,17 @@ document.addEventListener("click", e => {
   const rs = e.target.closest("#resetGame");
   if (rs) {
     if (rs.dataset.armed) {
-      Object.assign(game, { xp: 0, saved: 0, pleins: [], badges: {}, cities: [], lastDay: null, weekDone: null });
+      Object.assign(game, { xp: 0, saved: 0, pleins: [], badges: {}, cities: [], lastDay: null, weekDone: null, natSeen: false });
       saveGame(); renderGameChip(); renderProfile(); render(); toast("Progression remise à zéro");
     } else { rs.dataset.armed = "1"; rs.textContent = "Confirmer : tout effacer (XP, badges, historique)"; }
     return;
   }
+  const nf = e.target.closest("[data-natfuel]");
+  if (nf) { if (nf.dataset.natfuel !== nat.fuel) { nat.fuel = nf.dataset.natfuel; renderNatControls(); loadNat(false); } return; }
+  const ns = e.target.closest("[data-natside]");
+  if (ns) { if (ns.dataset.natside !== nat.side) { nat.side = ns.dataset.natside; renderNatControls(); renderNat(true); } return; }
+  const nc = e.target.closest("[data-natcity]");
+  if (nc) { goNatCity(nc.dataset.natcity); return; }
   const fuel = e.target.closest("[data-fuel]");
   if (fuel) { state.fuel = fuel.dataset.fuel; store.set("fuel", state.fuel); state.expanded.clear(); renderControls(); render(); return; }
   const rad = e.target.closest("[data-radius]");
@@ -1342,6 +1661,8 @@ document.addEventListener("click", e => {
   }
   const act = e.target.closest("[data-act]");
   if (act) {
+    if (act.dataset.act === "national") openNational();
+    if (act.dataset.act === "natretry") loadNat(true);
     if (act.dataset.act === "allcities") { state.allCities = !state.allCities; render(); }
     if (act.dataset.act === "clearcity") { state.city = null; render(); }
     if (act.dataset.act === "refresh") load();

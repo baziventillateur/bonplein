@@ -2,7 +2,9 @@
 
 Les stations-service autour de vous, de la moins chère à la plus chère : prix en direct, carburants en rupture, stations ouvertes ou fermées, classement par ville.
 
-L'application se géolocalise à l'ouverture. Elle est gamifiée : XP, niveaux, badges, podium et défi de la semaine. La progression reste sur l'appareil.
+Un bouton « Classement France » ouvre le podium national : les 3 villes les moins chères et les 3 plus chères de France pour chaque carburant, avec la place de votre ville.
+
+L'application se géolocalise à l'ouverture. Elle est gamifiée : XP, niveaux, badges (dont « Tour de France »), podiums et défi de la semaine. La progression reste sur l'appareil.
 
 **Site :** https://baziventillateur.github.io/bonplein/
 
