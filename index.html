@@ -1901,7 +1901,7 @@ function renderAccount() {
   const err = acct.error ? '<p class="acct-err">' + esc(acct.error) + "</p>" : "";
   if (!acct.user) {
     el.innerHTML = acct.sent
-      ? "<h3>Vérifiez votre boîte mail</h3><p>Un lien de connexion a été envoyé à <b>" + esc(acct.sent) + '</b>. Ouvrez-le sur cet appareil : vous reviendrez ici, connecté.</p><p class="muted">Rien reçu après une minute ? Regardez dans les spams et l'onglet Promotions. L'e-mail vient de bonplein@paceapp.fr ; le lien reste valable une heure.</p><button type="button" class="linkbtn" data-act="acctagain">Utiliser une autre adresse</button>'
+      ? "<h3>Vérifiez votre boîte mail</h3><p>Un lien de connexion a été envoyé à <b>" + esc(acct.sent) + '</b>. Ouvrez-le sur cet appareil : vous reviendrez ici, connecté.</p><p style="color:var(--muted);font-size:.875em">Rien reçu après une minute ? Regardez dans les spams et l'onglet Promotions. L'e-mail vient de bonplein@paceapp.fr ; le lien reste valable une heure.</p><button type="button" class="linkbtn" data-act="acctagain">Utiliser une autre adresse</button>'
       : "<h3>Gardez votre progression</h3>" +
         '<ul class="acct-why"><li>XP, badges et économies conservés si vous changez de téléphone</li><li>Vos stations favorites, retrouvées partout</li><li>Le point du lundi par e-mail : le meilleur prix près de chez vous</li></ul>' +
         '<form id="acctForm" class="acct-form"><label class="sr" for="acctMail">Adresse e-mail</label>' +
