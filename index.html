@@ -182,6 +182,11 @@ main{padding:0 10px 24px}
 .acct-form{display:grid;grid-template-columns:1fr auto;gap:6px}
 .acct-form input{min-width:0;height:40px;border:1.5px solid var(--line);border-radius:var(--r-s);padding:0 10px;background:var(--surface);font-size:1rem}
 .acct-form .sbtn{flex:none;padding:0 12px;white-space:nowrap}
+.gbtn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:42px;border:1.5px solid var(--line);border-radius:var(--r-s);background:var(--surface);color:var(--ink);font:inherit;font-weight:600;font-size:.9375rem;cursor:pointer}
+.gbtn:hover{border-color:var(--muted)}
+.gbtn:disabled{opacity:.6;cursor:default}
+.acct-or{display:flex;align-items:center;gap:8px;margin:10px 0 8px;color:var(--muted);font-size:.75rem}
+.acct-or::before,.acct-or::after{content:"";flex:1;border-top:1px solid var(--line)}
 .acct .acct-note{margin-top:6px;color:var(--muted);font-size:.75rem}
 .acct .acct-err{margin-top:8px;color:var(--rouge);font-weight:600}
 .acct-on b{display:block;font-size:.9375rem;color:var(--vert)}
@@ -446,7 +451,7 @@ dialog.center[open]{animation:pop .35s cubic-bezier(.2,1.4,.4,1)}
 <footer class="wrap">
   <p>Prix, ruptures et horaires : flux instantané « Prix des carburants en France » du ministère de l'Économie (prix-carburants.gouv.fr), actualisé toutes les 10 minutes. Adresses : Géoplateforme IGN.</p>
   <p>Ouvert ou fermé est calculé à partir des horaires déclarés par chaque station. Les ruptures sont déclarées par les stations elles-mêmes. L'évolution des prix vient d'un relevé fait chaque lundi. Votre progression (XP, badges, économies) reste sur cet appareil. Si vous créez un compte, votre e-mail, votre progression, vos réglages et vos stations favorites sont enregistrés chez Supabase, dans l'Union européenne ; vous pouvez tout supprimer depuis « Ma progression ».</p>
-  <p class="ver" id="ver">v1.104 du 15/11/2026 à 21h51</p>
+  <p class="ver" id="ver">v1.105 du 15/11/2026 à 21h59</p>
 </footer>
 
 <div id="toast" role="status" aria-live="polite" hidden></div>
@@ -1881,6 +1886,37 @@ async function sendLink(email) {
   } catch (e) { acct.error = "Connexion impossible pour le moment. Vérifiez la connexion internet."; }
   acct.busy = false; renderAccount();
 }
+// Connexion par le code à 6 chiffres de l’e-mail (même e-mail que le lien).
+async function verifyCode(code) {
+  acct.busy = true; acct.error = null; renderAccount();
+  try {
+    await acctInit();
+    const { error } = await acct.client.auth.verifyOtp({ email: acct.sent, token: code, type: "email" });
+    if (error) acct.error = error.status === 429 ? "Trop d’essais. Patientez quelques minutes." : "Code incorrect ou expiré. Vérifiez-le, ou demandez un nouvel e-mail.";
+    else toast("Vous êtes connecté. Votre progression est sauvegardée.");
+  } catch (e) { acct.error = "Connexion impossible pour le moment. Vérifiez la connexion internet."; }
+  acct.busy = false; renderAccount();
+}
+// Le bouton Google n’apparaît que si Google est activé dans Supabase.
+let providersP = null;
+function loadProviders() {
+  if (providersP) return;
+  providersP = fetch(SB_BASE + "/auth/v1/settings", { headers: { apikey: SB_KEY } })
+    .then(r => r.ok ? r.json() : null)
+    .then(j => { acct.google = !!(j && j.external && j.external.google); })
+    .catch(() => { acct.google = false; })
+    .then(() => renderAccount());
+}
+async function googleLogin() {
+  acct.busy = true; acct.error = null; renderAccount();
+  try {
+    await acctInit();
+    const { error } = await acct.client.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin + location.pathname } });
+    if (error) throw error;
+  } catch (e) {
+    acct.busy = false; acct.error = "Connexion avec Google impossible pour le moment. Utilisez votre e-mail."; renderAccount();
+  }
+}
 function toggleFav(id) {
   if (!acct.user) { renderProfile(); openDlg("profileDlg"); toast("Connectez-vous pour garder vos stations"); const b = $("#acctBox"); if (b) b.scrollIntoView({ block: "center" }); return; }
   const i = acct.fav.findIndex(f => String(f.id) === String(id));
@@ -1911,10 +1947,17 @@ function renderAccount() {
   if (!el) return;
   const err = acct.error ? '<p class="acct-err">' + esc(acct.error) + "</p>" : "";
   if (!acct.user) {
+    if (acct.google == null) loadProviders();
     el.innerHTML = acct.sent
-      ? "<h3>Vérifiez votre boîte mail</h3><p>Un lien de connexion a été envoyé à <b>" + esc(acct.sent) + '</b>. Ouvrez-le sur cet appareil : vous reviendrez ici, connecté.</p><p style="color:var(--muted);font-size:.875em">Rien reçu après une minute ? Regardez dans les spams et l’onglet Promotions. L’e-mail vient de bonplein@paceapp.fr ; le lien reste valable une heure.</p><button type="button" class="linkbtn" data-act="acctagain">Utiliser une autre adresse</button>'
+      ? "<h3>Vérifiez votre boîte mail</h3><p>Un e-mail a été envoyé à <b>" + esc(acct.sent) + "</b>. Ouvrez le lien sur cet appareil, ou tapez ici le code à 6 chiffres indiqué dans l’e-mail.</p>" +
+        '<form id="codeForm" class="acct-form"><label class="sr" for="acctCode">Code reçu par e-mail</label>' +
+        '<input id="acctCode" type="text" required inputmode="numeric" autocomplete="one-time-code" maxlength="12" placeholder="Code à 6 chiffres">' +
+        '<button type="submit" class="sbtn primary"' + (acct.busy ? " disabled" : "") + ">" + (acct.busy ? "Vérification…" : "Valider") + "</button></form>" + err +
+        '<p class="acct-note">Rien reçu après une minute ? Regardez dans les spams et l’onglet Promotions. L’e-mail vient de bonplein@paceapp.fr ; le lien et le code restent valables une heure.</p>' +
+        '<button type="button" class="linkbtn" data-act="acctagain">Utiliser une autre adresse</button>'
       : "<h3>Gardez votre progression</h3>" +
         '<ul class="acct-why"><li>XP, badges et économies conservés si vous changez de téléphone</li><li>Vos stations favorites, retrouvées partout</li><li>Le point du lundi par e-mail : le meilleur prix près de chez vous</li></ul>' +
+        (acct.google ? '<button type="button" class="gbtn" data-act="google"' + (acct.busy ? " disabled" : "") + '><svg aria-hidden="true" width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.9 6.1C12.5 13.6 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 6.9l7.4 5.7c4.3-4 6.9-9.9 6.9-17.1z"/><path fill="#FBBC05" d="M10.6 28.6c-.5-1.4-.8-2.9-.8-4.6s.3-3.2.8-4.6l-7.9-6.1C1 16.6 0 20.2 0 24s1 7.4 2.7 10.7l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.4-5.7c-2.1 1.4-4.8 2.3-8.5 2.3-6.2 0-11.5-4.1-13.4-9.8l-7.9 6.1C6.6 42.6 14.6 48 24 48z"/></svg> <span>Continuer avec Google</span></button><p class="acct-or"><span>ou par e-mail</span></p>' : "") +
         '<form id="acctForm" class="acct-form"><label class="sr" for="acctMail">Adresse e-mail</label>' +
         '<input id="acctMail" type="email" required autocomplete="email" inputmode="email" placeholder="votre@email.fr">' +
         '<button type="submit" class="sbtn primary"' + (acct.busy ? " disabled" : "") + ">" + (acct.busy ? "Envoi…" : "Recevoir mon lien") + "</button></form>" +
@@ -1937,6 +1980,12 @@ function renderAccount() {
     '<p class="acct-links"><button type="button" class="linkbtn" data-act="logout">Se déconnecter</button><button type="button" class="linkbtn danger" id="delAcct">Supprimer mon compte</button></p>';
 }
 document.addEventListener("submit", e => {
+  if (e.target.id === "codeForm") {
+    e.preventDefault();
+    const c = $("#acctCode").value.replace(/\D/g, "");
+    if (c.length >= 6) verifyCode(c);
+    return;
+  }
   if (e.target.id !== "acctForm") return;
   e.preventDefault();
   const v = $("#acctMail").value.trim();
@@ -1972,7 +2021,8 @@ async function acctClick(e) {
   const act = e.target.closest("[data-act]");
   if (!act) return false;
   const k = act.dataset.act;
-  if (k === "acctagain") { acct.sent = null; renderAccount(); return true; }
+  if (k === "acctagain") { acct.sent = null; acct.error = null; renderAccount(); return true; }
+  if (k === "google") { googleLogin(); return true; }
   if (k === "logout") { if (acct.saveT) await pushProfile(); await acct.client.auth.signOut({ scope: "local" }); toast("Déconnecté"); return true; }
   if (k === "hebdozone") { setHebdo(true); toast("Zone mise à jour"); return true; }
   return false;
@@ -2031,7 +2081,7 @@ function acctBoot() {
   }
   if (/error_description=/.test(h)) {
     try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
-    acct.error = "Ce lien de connexion a expiré ou a déjà servi. Demandez-en un nouveau.";
+    acct.error = /otp_expired/.test(h) ? "Ce lien de connexion a expiré ou a déjà servi. Demandez-en un nouveau." : "La connexion n’a pas abouti. Réessayez.";
     setTimeout(() => { renderProfile(); openDlg("profileDlg"); }, 300);
     return;
   }
