@@ -20,6 +20,7 @@
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="icon" type="image/png" href="icon.png">
 <link rel="apple-touch-icon" href="icon.png">
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
@@ -449,10 +450,10 @@ dialog.center[open]{animation:pop .35s cubic-bezier(.2,1.4,.4,1)}
 </main>
 
 <footer class="wrap">
-  <p>Prix, ruptures et horaires : flux instantané « Prix des carburants en France » du ministère de l'Économie (prix-carburants.gouv.fr), actualisé toutes les 10 minutes. Adresses : Géoplateforme IGN.</p>
+  <p>Bonplein n’est pas un service de l’État. Prix, ruptures et horaires : flux instantané « Prix des carburants en France » du ministère de l'Économie (prix-carburants.gouv.fr), actualisé toutes les 10 minutes. Adresses : Géoplateforme IGN.</p>
   <p>Ouvert ou fermé est calculé à partir des horaires déclarés par chaque station. Les ruptures sont déclarées par les stations elles-mêmes. L'évolution des prix vient d'un relevé fait chaque lundi. Votre progression (XP, badges, économies) reste sur cet appareil. Si vous créez un compte, votre e-mail, votre progression, vos réglages et vos stations favorites sont enregistrés chez Supabase, dans l'Union européenne ; vous pouvez tout supprimer depuis « Ma progression ».</p>
   <p><a href="confidentialite.html">Confidentialité</a><span aria-hidden="true"> | </span><a href="conditions.html">Conditions d’utilisation</a><span aria-hidden="true"> | </span><a href="conditions.html#mentions">Mentions légales</a></p>
-  <p class="ver" id="ver">v1.108 du 15/11/2026 à 22h39</p>
+  <p class="ver" id="ver">v1.109 du 15/11/2026 à 23h23</p>
 </footer>
 
 <div id="toast" role="status" aria-live="polite" hidden></div>
@@ -2154,6 +2155,7 @@ renderControls();
 render();
 renderGameChip();
 acctBoot();
+if ("serviceWorker" in navigator) window.addEventListener("load", () => { navigator.serviceWorker.register("sw.js").catch(() => {}); });
 (async () => {
   if (state.place) qEl.value = state.place.label;
   if (!geoBlockedByPage() && navigator.permissions && navigator.permissions.query) {
