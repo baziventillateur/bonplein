@@ -4,7 +4,7 @@ Les stations-service autour de vous, de la moins chère à la plus chère : prix
 
 L'application se géolocalise à l'ouverture. Elle est gamifiée : XP, niveaux, badges, podium et défi de la semaine. La progression reste sur l'appareil.
 
-**Site :** https://baziventillateur.github.io/Bonplein/
+**Site :** https://baziventillateur.github.io/bonplein/
 
 ## Données
 
