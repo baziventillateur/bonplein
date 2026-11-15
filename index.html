@@ -169,6 +169,31 @@ main{padding:0 10px 24px}
 .c-delta.best{color:var(--vert)}
 .cmore{margin:6px 1px 0;font-size:.8125rem}
 .trend{font-weight:600}
+.favstar{color:#C99A12}
+.favbtn{display:block;margin:8px 0 0;border:0;background:none;padding:4px 0;font-weight:600;font-size:.8125rem;color:var(--ink);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.favbtn.on{color:#A47C0B;text-decoration:none}
+@media (prefers-color-scheme:dark){.favbtn.on,.favstar{color:var(--totem)}}
+.acct{margin:12px 0 0;padding:11px 12px;border:1.5px solid var(--totem);border-radius:var(--r-m)}
+.sheet .acct h3{margin:0 0 6px}
+.sheet .acct h3:not(:first-child){margin-top:14px}
+.acct p{margin:0;font-size:.8125rem}
+.acct-why{margin:0 0 9px;padding-left:18px;font-size:.8125rem}
+.acct-why li{margin:2px 0}
+.acct-form{display:grid;grid-template-columns:1fr auto;gap:6px}
+.acct-form input{min-width:0;height:40px;border:1.5px solid var(--line);border-radius:var(--r-s);padding:0 10px;background:var(--surface);font-size:1rem}
+.acct-form .sbtn{flex:none;padding:0 12px;white-space:nowrap}
+.acct .acct-note{margin-top:6px;color:var(--muted);font-size:.75rem}
+.acct .acct-err{margin-top:8px;color:var(--rouge);font-weight:600}
+.acct-on b{display:block;font-size:.9375rem;color:var(--vert)}
+.acct-on span{color:var(--muted);overflow-wrap:anywhere}
+.favs{list-style:none;margin:0;padding:0}
+.favs li{display:flex;align-items:center;gap:6px;border-top:1px solid var(--line)}
+.favgo{flex:1;min-width:0;text-align:left;border:0;background:none;padding:6px 0;cursor:pointer;font-size:.8125rem}
+.favgo span{display:block;color:var(--muted);font-size:.75rem}
+.favdel{flex:none;width:30px;height:30px;border:0;border-radius:50%;background:var(--beton);cursor:pointer;font-size:1.125rem;line-height:1}
+.acct-seuil{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px;font-size:.8125rem}
+.acct-seuil input{width:78px;height:32px;border:1.5px solid var(--line);border-radius:var(--r-s);text-align:center;font-weight:600;background:var(--surface)}
+.acct-links{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:14px!important}
 .histo{display:flex;align-items:center;gap:10px;margin:2px 0 6px;font-size:.8125rem;color:var(--muted)}
 .histo p{margin:0}
 .spark{flex:0 0 auto;color:var(--muted)}
@@ -419,7 +444,7 @@ dialog.center[open]{animation:pop .35s cubic-bezier(.2,1.4,.4,1)}
 
 <footer class="wrap">
   <p>Prix, ruptures et horaires : flux instantané « Prix des carburants en France » du ministère de l'Économie (prix-carburants.gouv.fr), actualisé toutes les 10 minutes. Adresses : Géoplateforme IGN.</p>
-  <p>Ouvert ou fermé est calculé à partir des horaires déclarés par chaque station. Les ruptures sont déclarées par les stations elles-mêmes. L'évolution des prix vient d'un relevé fait chaque lundi. Votre progression (XP, badges, économies) reste sur cet appareil.</p>
+  <p>Ouvert ou fermé est calculé à partir des horaires déclarés par chaque station. Les ruptures sont déclarées par les stations elles-mêmes. L'évolution des prix vient d'un relevé fait chaque lundi. Votre progression (XP, badges, économies) reste sur cet appareil. Si vous créez un compte, votre e-mail, votre progression, vos réglages et vos stations favorites sont enregistrés chez Supabase, dans l'Union européenne ; vous pouvez tout supprimer depuis « Ma progression ».</p>
 </footer>
 
 <div id="toast" role="status" aria-live="polite" hidden></div>
@@ -486,7 +511,10 @@ const FUEL = Object.fromEntries(FUELS.map(f => [f.key, f]));
 /* ---------- Mémoire locale (facultative) ---------- */
 const store = {
   get(k, d) { try { const v = localStorage.getItem("plein:" + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
-  set(k, v) { try { localStorage.setItem("plein:" + k, JSON.stringify(v)); } catch (e) {} }
+  set(k, v, quiet) {
+    try { localStorage.setItem("plein:" + k, JSON.stringify(v)); } catch (e) {}
+    if (!quiet && (k === "game" || k === "fuel" || k === "radius" || k === "tank" || k === "hideClosed" || k === "freshOnly") && typeof queueSave === "function") queueSave();
+  }
 };
 
 const state = {
@@ -1034,7 +1062,7 @@ function rowHTML(r, c, F) {
   let h = '<li><button type="button" class="row-main" data-row="' + esc(s.id) + '" aria-expanded="' + open + '" aria-controls="' + did + '">' +
     '<span class="r-price"><span class="r-rank">' + medalHTML(r.rank, c.count) + (state.sort === "dist" ? fmtDist(s.dist) : (r.rank <= 3 && c.count >= 3 ? "" : "n° " + r.rank)) + '</span><span class="p">' + priceHTML(r.f.price) + '</span><span class="gauge" aria-hidden="true"><i style="left:' + (pos * 100).toFixed(1) + '%"></i></span>' +
     '<span class="r-delta' + (delta < 0.0005 ? " best" : "") + '">' + (delta < 0.0005 ? "Meilleur prix" : "+" + fmtPrice(delta) + " €") + "</span></span>" +
-    '<span class="r-info"><span class="r-addr">' + esc(s.adresse) + "</span>" +
+    '<span class="r-info"><span class="r-addr">' + (isFav(s.id) ? '<span class="favstar" aria-label="Station favorite">★ </span>' : "") + esc(s.adresse) + "</span>" +
     '<span class="r-meta">' + esc(s.cityName) + (state.sort === "dist" ? "" : ", " + fmtDist(s.dist)) + (s.autoroute ? ", autoroute" : "") + (r.stale ? ', <span class="stale">prix ' + esc(ago(r.f.maj)) + "</span>" : "") + trendTag(s, r.f.price) + "</span>" +
     '<span class="st ' + r.open.state + '">' + esc(r.open.text) + "</span></span>" +
     "</button>";
@@ -1062,7 +1090,7 @@ function detailHTML(r, c) {
     (L > 0 ? '<p class="detail-line">Plein de ' + L + " L ici : <b>" + euro(r.f.price * L) + "</b>" + (r.f.price > c.min ? ", " + euro((r.f.price - c.min) * L) + " de plus qu'à la moins chère" : "") + ".</p>" : "") +
     '<p class="detail-line">Horaires aujourd\'hui : <b>' + esc(todayHours(s.H, c.now)) + "</b></p>" +
     (s.services.length ? '<p class="detail-line">Services : ' + esc(s.services.join(", ")) + "</p>" : "") +
-    linksHTML(s, pleinBtnHTML(r, c));
+    linksHTML(s, pleinBtnHTML(r, c)) + favBtnHTML(s);
 }
 
 function renderControls() {
@@ -1194,10 +1222,11 @@ const BADGES = [
   { id: "streak3",  icon: "🔥", name: "Régulier",            desc: "Un plein enregistré 3 semaines de suite." },
   { id: "pleins10", icon: "🎯", name: "Fidèle",              desc: "10 pleins enregistrés." },
   { id: "early",    icon: "🌅", name: "Lève-tôt",            desc: "Chercher une station avant 7h." },
-  { id: "france",   icon: "🗺️", name: "Tour de France",      desc: "Consulter le classement national des villes." }
+  { id: "france",   icon: "🗺️", name: "Tour de France",      desc: "Consulter le classement national des villes." },
+  { id: "compte",   icon: "💾", name: "À l'abri",            desc: "Sauvegarder sa progression avec un compte." }
 ];
-const game = Object.assign({ xp: 0, saved: 0, pleins: [], badges: {}, cities: [], lastDay: null, weekDone: null, natSeen: false }, store.get("game", {}) || {});
-function saveGame() { store.set("game", game); }
+const game = Object.assign({ xp: 0, saved: 0, pleins: [], badges: {}, cities: [], lastDay: null, weekDone: null, natSeen: false, owner: null, rev: 0, acctBonus: false }, store.get("game", {}) || {});
+function saveGame() { game.rev = Date.now(); store.set("game", game); }
 function dayKey(d = new Date()) {
   try { return new Intl.DateTimeFormat("fr-CA", { timeZone: "Europe/Paris", year: "numeric", month: "2-digit", day: "2-digit" }).format(d); }
   catch (e) { return d.toISOString().slice(0, 10); }
@@ -1247,7 +1276,8 @@ function checkBadges(ctx) {
     streak3: () => streakWeeks() >= 3,
     pleins10: () => game.pleins.length >= 10,
     early: () => !!ctx.early,
-    france: () => !!game.natSeen
+    france: () => !!game.natSeen,
+    compte: () => !!(acct.user && acct.synced)
   };
   const won = [];
   for (const b of BADGES) if (!game.badges[b.id] && tests[b.id]()) { game.badges[b.id] = Date.now(); won.push(b); }
@@ -1390,12 +1420,14 @@ function renderProfile() {
     '<div class="pf-level"><span class="lv big">' + L.n + "</span><div><b>" + esc(L.name) + "</b><span>" + game.xp + " XP" +
       (L.next ? ", encore " + L.toNext + " XP pour devenir « " + esc(L.next.name) + " »" : ", niveau maximum atteint") +
       '</span><span class="xpbar wide"><i style="width:' + Math.round(L.pct * 100) + '%"></i></span></div></div>' +
+    '<section class="acct" id="acctBox" aria-label="Mon compte"></section>' +
     '<div class="pf-stats"><div><b>' + euro(game.saved) + "</b><span>économisés</span></div><div><b>" + game.pleins.length + "</b><span>" + (game.pleins.length > 1 ? "pleins" : "plein") + "</span></div><div><b>" + sw + "</b><span>" + (sw > 1 ? "semaines de suite" : "semaine de suite") + "</span></div></div>" +
     '<div class="pf-chal' + (done ? " done" : "") + '"><b>Défi de la semaine</b><span>Faire le plein dans le top 3 du secteur : +50 XP.</span><em>' + (done ? "Réussi" : "À faire") + "</em></div>" +
     "<h3>Badges " + nb + "/" + BADGES.length + '</h3><ul class="badges">' + badges + "</ul>" +
     '<h3>Derniers pleins</h3><ul class="hist">' + hist + "</ul>" +
     '<p class="pf-how">Gagner des XP : 5 par jour en cherchant, 20 par plein enregistré, 10 par euro économisé par rapport à la moyenne du secteur, 10 à 30 de bonus sur le podium, 50 pour le défi de la semaine, ' + BADGE_XP + " par badge, 3 par nouvelle ville comparée.</p>" +
     '<button type="button" class="linkbtn danger" id="resetGame">Remettre ma progression à zéro</button>';
+  renderAccount();
 }
 function onLoaded() {
   const k = dayKey();
@@ -1725,8 +1757,229 @@ async function goNatCity(key) {
   } catch (e) { state.locating = false; state.error = e; render(); }
 }
 
+/* ---------- Compte facultatif : sauvegarde, stations favorites, point du lundi ---------- */
+const SB_BASE = "https://noqtcanisopyayehyjax.supabase.co";
+const SB_TOKEN_KEY = "sb-noqtcanisopyayehyjax-auth-token";
+const FAV_MAX = 12;
+const PREF_KEYS = ["fuel", "radius", "tank", "hideClosed", "freshOnly"];
+const acct = { client: null, initP: null, user: null, fav: [], alertes: {}, busy: false, sent: null, error: null, saveT: null, synced: false };
+const isFav = id => acct.fav.some(f => String(f.id) === String(id));
+
+function sbLib() {
+  return new Promise((res, rej) => {
+    if (window.supabase && window.supabase.createClient) return res();
+    const el = document.createElement("script");
+    el.src = "vendor/supabase.js";
+    el.onload = () => res();
+    el.onerror = () => rej(new Error("lib"));
+    document.head.appendChild(el);
+  });
+}
+function acctInit() {
+  if (!acct.initP) acct.initP = (async () => {
+    await sbLib();
+    acct.client = window.supabase.createClient(SB_BASE, SB_KEY, { auth: { flowType: "implicit", detectSessionInUrl: true, persistSession: true, autoRefreshToken: true } });
+    acct.client.auth.onAuthStateChange((ev, session) => { setTimeout(() => onSession(session), 0); });
+  })().catch(e => { acct.initP = null; throw e; });
+  return acct.initP;
+}
+let sessionBusy = Promise.resolve();
+function onSession(session) {
+  sessionBusy = sessionBusy.then(async () => {
+    const u = session && session.user ? session.user : null;
+    if ((u && acct.user && u.id === acct.user.id) || (!u && !acct.user)) return;
+    acct.user = u; acct.synced = false; acct.sent = null; acct.error = null;
+    if (u) await pullProfile();
+    else { acct.fav = []; acct.alertes = {}; }
+    renderAccount(); render();
+  }).catch(() => {});
+}
+const prefsNow = () => ({ fuel: state.fuel, radius: state.radius, tank: state.tank, hideClosed: state.hideClosed, freshOnly: state.freshOnly });
+function applyPrefs(p) {
+  if (!p || typeof p !== "object") return;
+  const oldR = state.radius;
+  if (FUEL[p.fuel]) state.fuel = p.fuel;
+  if (RADII.includes(p.radius)) state.radius = p.radius;
+  if (num(p.tank) > 0) state.tank = Math.round(num(p.tank));
+  if (typeof p.hideClosed === "boolean") state.hideClosed = p.hideClosed;
+  if (typeof p.freshOnly === "boolean") state.freshOnly = p.freshOnly;
+  PREF_KEYS.forEach(k => store.set(k, state[k], true));
+  renderControls();
+  if (state.radius !== oldR && state.place && !state.loading) load();
+}
+const GAME_BLANK = () => ({ xp: 0, saved: 0, pleins: [], badges: {}, cities: [], lastDay: null, weekDone: null, natSeen: false, owner: null, rev: 0, acctBonus: false });
+function mergeGame(remote) {
+  const uid = acct.user.id;
+  const ok = remote && typeof remote === "object" && Array.isArray(remote.pleins);
+  if (!ok) { game.owner = uid; return; }
+  const take = () => { for (const k of Object.keys(game)) delete game[k]; Object.assign(game, GAME_BLANK(), remote); };
+  if (game.owner === uid) { if ((remote.rev || 0) > (game.rev || 0)) take(); }
+  else if (game.owner) take();
+  else {
+    /* progression faite sans compte sur cet appareil : on l'ajoute à celle du compte */
+    const loc = JSON.parse(JSON.stringify(game));
+    take();
+    let dup = 0;
+    for (const k of Object.keys(loc.badges || {})) { if (game.badges[k]) dup++; else game.badges[k] = loc.badges[k]; }
+    game.xp += Math.max(0, (loc.xp || 0) - dup * BADGE_XP);
+    game.saved = Math.round((game.saved + (loc.saved || 0)) * 100) / 100;
+    game.pleins = (loc.pleins || []).concat(game.pleins).sort((a, b) => b.t - a.t).slice(0, 60);
+    (loc.cities || []).forEach(c => { if (!game.cities.includes(c)) game.cities.push(c); });
+    if (loc.lastDay && (!game.lastDay || loc.lastDay > game.lastDay)) game.lastDay = loc.lastDay;
+    game.weekDone = game.weekDone || loc.weekDone; game.natSeen = game.natSeen || loc.natSeen;
+  }
+  game.owner = uid;
+}
+async function pullProfile() {
+  const uid = acct.user.id;
+  const { data, error } = await acct.client.from("profils").select("game,prefs,favoris,alertes").eq("user_id", uid).maybeSingle();
+  if (error) { acct.error = "La sauvegarde n'a pas pu être lue. Réessayez plus tard."; return; }
+  mergeGame(data && data.game);
+  acct.fav = data && Array.isArray(data.favoris) ? data.favoris.slice(0, FAV_MAX) : [];
+  acct.alertes = data && data.alertes && typeof data.alertes === "object" ? data.alertes : {};
+  if (data && data.prefs) applyPrefs(data.prefs);
+  acct.synced = true;
+  store.set("game", game, true);
+  renderGameChip();
+  await pushProfile();
+  if (!game.acctBonus) { game.acctBonus = true; award(50, "progression sauvegardée"); }
+  else award(0, null);
+}
+async function pushProfile() {
+  clearTimeout(acct.saveT); acct.saveT = null;
+  if (!acct.user || !acct.synced || !acct.client) return;
+  const { error } = await acct.client.from("profils").upsert({ user_id: acct.user.id, game, prefs: prefsNow(), favoris: acct.fav, alertes: acct.alertes, updated_at: new Date().toISOString() }, { onConflict: "user_id" });
+  acct.error = error ? "La sauvegarde en ligne a échoué. Elle sera retentée à la prochaine modification." : null;
+}
+function queueSave() {
+  if (!acct.user || !acct.synced) return;
+  clearTimeout(acct.saveT);
+  acct.saveT = setTimeout(pushProfile, 1500);
+}
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden" && acct.saveT) pushProfile(); });
+
+async function sendLink(email) {
+  acct.busy = true; acct.error = null; renderAccount();
+  try {
+    await acctInit();
+    const { error } = await acct.client.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname } });
+    if (error) acct.error = error.status === 429 ? "Trop de demandes. Réessayez dans quelques minutes." : "Le lien n'a pas pu être envoyé. Vérifiez l'adresse et réessayez.";
+    else acct.sent = email;
+  } catch (e) { acct.error = "Connexion impossible pour le moment. Vérifiez la connexion internet."; }
+  acct.busy = false; renderAccount();
+}
+function toggleFav(id) {
+  if (!acct.user) { renderProfile(); openDlg("profileDlg"); toast("Connectez-vous pour garder vos stations"); const b = $("#acctBox"); if (b) b.scrollIntoView({ block: "center" }); return; }
+  const i = acct.fav.findIndex(f => String(f.id) === String(id));
+  if (i >= 0) { acct.fav.splice(i, 1); toast("Station retirée de vos favorites"); }
+  else {
+    const s = state.stations.find(x => x.id === id);
+    if (!s) return;
+    if (acct.fav.length >= FAV_MAX) { toast("Maximum " + FAV_MAX + " stations favorites"); return; }
+    acct.fav.push({ id: s.id, adresse: s.adresse, ville: s.cityName, lat: s.lat, lon: s.lon });
+    toast("Station ajoutée à vos favorites");
+  }
+  queueSave(); render();
+  if ($("#profileDlg").open) renderAccount();
+}
+function setHebdo(on) {
+  if (on) {
+    if (!state.place) { toast("Cherchez d'abord une adresse"); renderAccount(); return; }
+    acct.alertes = { hebdo: true, fuel: state.fuel, lat: state.place.lat, lon: state.place.lon, rayon: state.radius, label: state.place.label, seuil: acct.alertes.seuil || null };
+  } else acct.alertes = Object.assign({}, acct.alertes, { hebdo: false });
+  queueSave(); renderAccount();
+}
+function favBtnHTML(s) {
+  const on = isFav(s.id);
+  return '<button type="button" class="favbtn' + (on ? " on" : "") + '" data-fav="' + esc(s.id) + '" aria-pressed="' + on + '">' + (on ? "★ Dans mes stations" : "☆ Ajouter à mes stations") + "</button>";
+}
+function renderAccount() {
+  const el = $("#acctBox");
+  if (!el) return;
+  const err = acct.error ? '<p class="acct-err">' + esc(acct.error) + "</p>" : "";
+  if (!acct.user) {
+    el.innerHTML = acct.sent
+      ? "<h3>Vérifiez votre boîte mail</h3><p>Un lien de connexion a été envoyé à <b>" + esc(acct.sent) + '</b>. Ouvrez-le sur cet appareil : vous reviendrez ici, connecté.</p><button type="button" class="linkbtn" data-act="acctagain">Utiliser une autre adresse</button>'
+      : "<h3>Gardez votre progression</h3>" +
+        '<ul class="acct-why"><li>XP, badges et économies conservés si vous changez de téléphone</li><li>Vos stations favorites, retrouvées partout</li><li>Le point du lundi par e-mail : le meilleur prix près de chez vous</li></ul>' +
+        '<form id="acctForm" class="acct-form"><label class="sr" for="acctMail">Adresse e-mail</label>' +
+        '<input id="acctMail" type="email" required autocomplete="email" inputmode="email" placeholder="votre@email.fr">' +
+        '<button type="submit" class="sbtn primary"' + (acct.busy ? " disabled" : "") + ">" + (acct.busy ? "Envoi…" : "Recevoir mon lien") + "</button></form>" +
+        '<p class="acct-note">Sans mot de passe. +50 XP à la première connexion.</p>' + err;
+    return;
+  }
+  const a = acct.alertes || {};
+  const favs = acct.fav.length
+    ? '<ul class="favs">' + acct.fav.map(f => '<li><button type="button" class="favgo" data-favgo="' + esc(f.id) + '"><b>' + esc(f.adresse) + "</b><span>" + esc(f.ville) + '</span></button><button type="button" class="favdel" data-fav="' + esc(f.id) + '" aria-label="Retirer ' + esc(f.adresse) + '">×</button></li>').join("") + "</ul>"
+    : '<p class="acct-note">Aucune pour l\'instant. Ouvrez une station dans la liste, puis touchez « Ajouter à mes stations ».</p>';
+  el.innerHTML = '<p class="acct-on"><b>Progression sauvegardée</b><span>' + esc(acct.user.email || "") + "</span></p>" + err +
+    "<h3>Mes stations</h3>" + favs +
+    "<h3>Le point du lundi</h3>" +
+    '<label class="chipt acct-tog"><input type="checkbox" id="hebdoTog"' + (a.hebdo ? " checked" : "") + "> <span>Recevoir un e-mail chaque lundi</span></label>" +
+    (a.hebdo
+      ? '<p class="acct-note">' + esc((FUEL[a.fuel] || FUEL.gazole).title) + " le moins cher dans " + esc(a.rayon) + " km autour de " + esc(a.label || "votre adresse") + ", et l'évolution de vos stations. " +
+        '<button type="button" class="linkbtn" data-act="hebdozone">Utiliser ma recherche actuelle</button></p>' +
+        '<label class="acct-seuil" for="seuilIn">Me signaler un prix sous <input id="seuilIn" type="number" inputmode="decimal" step="0.001" min="0.3" max="4" placeholder="1,950" value="' + (a.seuil ? esc(a.seuil) : "") + '"> €/L</label>'
+      : '<p class="acct-note">Le meilleur prix près de chez vous et l\'évolution de vos stations, une fois par semaine.</p>') +
+    '<p class="acct-links"><button type="button" class="linkbtn" data-act="logout">Se déconnecter</button><button type="button" class="linkbtn danger" id="delAcct">Supprimer mon compte</button></p>';
+}
+document.addEventListener("submit", e => {
+  if (e.target.id !== "acctForm") return;
+  e.preventDefault();
+  const v = $("#acctMail").value.trim();
+  if (v) sendLink(v);
+});
+document.addEventListener("change", e => {
+  if (e.target.id === "hebdoTog") setHebdo(e.target.checked);
+  if (e.target.id === "seuilIn") {
+    const v = num(e.target.value);
+    acct.alertes = Object.assign({}, acct.alertes, { seuil: v && v >= 0.3 && v <= 4 ? Math.round(v * 1000) / 1000 : null });
+    queueSave();
+  }
+});
+async function acctClick(e) {
+  const fav = e.target.closest("[data-fav]");
+  if (fav) { toggleFav(fav.dataset.fav); return true; }
+  const go = e.target.closest("[data-favgo]");
+  if (go) {
+    const f = acct.fav.find(x => String(x.id) === go.dataset.favgo);
+    if (f) { closeDlg("profileDlg"); window.scrollTo(0, 0); setPlace({ label: f.adresse + ", " + f.ville, lat: f.lat, lon: f.lon }); }
+    return true;
+  }
+  const del = e.target.closest("#delAcct");
+  if (del) {
+    if (!del.dataset.armed) { del.dataset.armed = "1"; del.textContent = "Confirmer : supprimer mon compte et ma sauvegarde en ligne"; return true; }
+    const { error } = await acct.client.rpc("supprimer_mon_compte");
+    if (error) { acct.error = "La suppression a échoué. Réessayez."; renderAccount(); return true; }
+    game.owner = null; game.acctBonus = true; store.set("game", game, true);
+    try { await acct.client.auth.signOut({ scope: "local" }); } catch (x) {}
+    toast("Compte supprimé");
+    return true;
+  }
+  const act = e.target.closest("[data-act]");
+  if (!act) return false;
+  const k = act.dataset.act;
+  if (k === "acctagain") { acct.sent = null; renderAccount(); return true; }
+  if (k === "logout") { if (acct.saveT) await pushProfile(); await acct.client.auth.signOut({ scope: "local" }); toast("Déconnecté"); return true; }
+  if (k === "hebdozone") { setHebdo(true); toast("Zone mise à jour"); return true; }
+  return false;
+}
+function acctBoot() {
+  const h = location.hash || "";
+  if (/error_description=/.test(h)) {
+    try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
+    acct.error = "Ce lien de connexion a expiré ou a déjà servi. Demandez-en un nouveau.";
+    setTimeout(() => { renderProfile(); openDlg("profileDlg"); }, 300);
+    return;
+  }
+  let has = false;
+  try { has = !!localStorage.getItem(SB_TOKEN_KEY); } catch (e) {}
+  if (has || /access_token=/.test(h)) acctInit().catch(() => {});
+}
+
 /* ---------- Réglages ---------- */
-document.addEventListener("click", e => {
+document.addEventListener("click", async e => {
+  if (await acctClick(e)) return;
   const pl = e.target.closest("[data-plein]");
   if (pl) { openPlein(pl.dataset.plein); return; }
   const cl = e.target.closest("[data-close]");
@@ -1785,6 +2038,7 @@ setInterval(() => { if (!state.loading && state.fetchedAt) render(); }, 60000);
 renderControls();
 render();
 renderGameChip();
+acctBoot();
 (async () => {
   if (state.place) qEl.value = state.place.label;
   if (!geoBlockedByPage() && navigator.permissions && navigator.permissions.query) {

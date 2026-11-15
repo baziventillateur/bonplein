@@ -12,6 +12,10 @@ L'application se géolocalise à l'ouverture. Elle est gamifiée : XP, niveaux, 
 
 Chaque lundi, une fonction Supabase (`releve-hebdo`, projet `bonplein`) relève les prix de toutes les stations et prépare les indicateurs (12 dernières semaines par station, moyenne France). Le site ne lit que ces indicateurs déjà calculés : une requête par recherche.
 
+## Compte (facultatif)
+
+Connexion par lien envoyé par e-mail (Supabase Auth, sans mot de passe). Le compte sauvegarde la progression, les réglages et les stations favorites, et permet de recevoir « le point du lundi » par e-mail. Tout le reste fonctionne sans compte. La bibliothèque Supabase (`vendor/supabase.js`) n'est chargée que si l'on se connecte.
+
 ## Données
 
 - Prix, ruptures et horaires : flux instantané « Prix des carburants en France » du ministère de l'Économie (prix-carburants.gouv.fr), via l'API data.economie.gouv.fr, actualisé toutes les 10 minutes.
