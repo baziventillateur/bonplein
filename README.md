@@ -8,6 +8,10 @@ L'application se géolocalise à l'ouverture. Elle est gamifiée : XP, niveaux, 
 
 **Site :** https://bonplein.paceapp.fr/
 
+## Historique des prix
+
+Chaque lundi, une fonction Supabase (`releve-hebdo`, projet `bonplein`) relève les prix de toutes les stations et prépare les indicateurs (12 dernières semaines par station, moyenne France). Le site ne lit que ces indicateurs déjà calculés : une requête par recherche.
+
 ## Données
 
 - Prix, ruptures et horaires : flux instantané « Prix des carburants en France » du ministère de l'Économie (prix-carburants.gouv.fr), via l'API data.economie.gouv.fr, actualisé toutes les 10 minutes.

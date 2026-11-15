@@ -168,6 +168,12 @@ main{padding:0 10px 24px}
 .c-delta{font-size:.75rem;font-weight:600;color:var(--muted);text-align:right;white-space:nowrap}
 .c-delta.best{color:var(--vert)}
 .cmore{margin:6px 1px 0;font-size:.8125rem}
+.trend{font-weight:600}
+.histo{display:flex;align-items:center;gap:10px;margin:2px 0 6px;font-size:.8125rem;color:var(--muted)}
+.histo p{margin:0}
+.spark{flex:0 0 auto;color:var(--muted)}
+.spark.up{color:var(--rouge)}
+.spark.down{color:var(--vert)}
 .cfoot{display:flex;align-items:center;gap:8px;margin:6px 1px 0;font-size:.8125rem}
 .natbtn{display:inline-flex;align-items:center;gap:5px;height:26px;padding:0 9px 0 7px;margin-left:auto;border:1.5px solid var(--line);border-radius:999px;background:transparent;color:var(--muted);font-weight:600;font-size:.75rem;cursor:pointer;white-space:nowrap}
 .natbtn svg{width:13px;height:13px}
@@ -413,7 +419,7 @@ dialog.center[open]{animation:pop .35s cubic-bezier(.2,1.4,.4,1)}
 
 <footer class="wrap">
   <p>Prix, ruptures et horaires : flux instantané « Prix des carburants en France » du ministère de l'Économie (prix-carburants.gouv.fr), actualisé toutes les 10 minutes. Adresses : Géoplateforme IGN.</p>
-  <p>Ouvert ou fermé est calculé à partir des horaires déclarés par chaque station. Les ruptures sont déclarées par les stations elles-mêmes. Votre progression (XP, badges, économies) reste sur cet appareil.</p>
+  <p>Ouvert ou fermé est calculé à partir des horaires déclarés par chaque station. Les ruptures sont déclarées par les stations elles-mêmes. L'évolution des prix vient d'un relevé fait chaque lundi. Votre progression (XP, badges, économies) reste sur cet appareil.</p>
 </footer>
 
 <div id="toast" role="status" aria-live="polite" hidden></div>
@@ -799,6 +805,7 @@ async function load() {
     state.truncated = truncated;
     state.fetchedAt = new Date();
     setTimeout(onLoaded, 0);
+    loadHist();
   } catch (e) {
     if (my !== reqId) return;
     state.error = e;
@@ -1028,13 +1035,18 @@ function rowHTML(r, c, F) {
     '<span class="r-price"><span class="r-rank">' + medalHTML(r.rank, c.count) + (state.sort === "dist" ? fmtDist(s.dist) : (r.rank <= 3 && c.count >= 3 ? "" : "n° " + r.rank)) + '</span><span class="p">' + priceHTML(r.f.price) + '</span><span class="gauge" aria-hidden="true"><i style="left:' + (pos * 100).toFixed(1) + '%"></i></span>' +
     '<span class="r-delta' + (delta < 0.0005 ? " best" : "") + '">' + (delta < 0.0005 ? "Meilleur prix" : "+" + fmtPrice(delta) + " €") + "</span></span>" +
     '<span class="r-info"><span class="r-addr">' + esc(s.adresse) + "</span>" +
-    '<span class="r-meta">' + esc(s.cityName) + (state.sort === "dist" ? "" : ", " + fmtDist(s.dist)) + (s.autoroute ? ", autoroute" : "") + (r.stale ? ', <span class="stale">prix ' + esc(ago(r.f.maj)) + "</span>" : "") + "</span>" +
+    '<span class="r-meta">' + esc(s.cityName) + (state.sort === "dist" ? "" : ", " + fmtDist(s.dist)) + (s.autoroute ? ", autoroute" : "") + (r.stale ? ', <span class="stale">prix ' + esc(ago(r.f.maj)) + "</span>" : "") + trendTag(s, r.f.price) + "</span>" +
     '<span class="st ' + r.open.state + '">' + esc(r.open.text) + "</span></span>" +
     "</button>";
   h += '<div class="row-detail" id="' + did + '"' + (open ? "" : " hidden") + ">" + (open ? detailHTML(r, c) : "") + "</div></li>";
   return h;
 }
 
+function trendTag(s, live) {
+  const t = trendOf(s, state.fuel, live);
+  if (!t || !t.dir) return "";
+  return ', <span class="' + (t.dir > 0 ? "minus" : "plus") + ' trend">' + (t.dir > 0 ? "en hausse" : "en baisse") + "</span>";
+}
 function detailHTML(r, c) {
   const s = r.s;
   const lines = FUELS.map(F => {
@@ -1046,6 +1058,7 @@ function detailHTML(r, c) {
   }).join("");
   const L = Math.max(0, num(state.tank) || 0);
   return '<table class="prices"><tbody>' + lines + "</tbody></table>" +
+    histHTML(s, state.fuel, r.f.price) +
     (L > 0 ? '<p class="detail-line">Plein de ' + L + " L ici : <b>" + euro(r.f.price * L) + "</b>" + (r.f.price > c.min ? ", " + euro((r.f.price - c.min) * L) + " de plus qu'à la moins chère" : "") + ".</p>" : "") +
     '<p class="detail-line">Horaires aujourd\'hui : <b>' + esc(todayHours(s.H, c.now)) + "</b></p>" +
     (s.services.length ? '<p class="detail-line">Services : ' + esc(s.services.join(", ")) + "</p>" : "") +
@@ -1389,6 +1402,84 @@ function onLoaded() {
   const early = parisNow().min < 7 * 60;
   if (game.lastDay !== k) { game.lastDay = k; award(5, "visite du jour", { early }); }
   else award(0, null, { early });
+}
+
+/* ---------- Historique hebdomadaire (KPI préparés, lecture seule) ---------- */
+const SB = "https://noqtcanisopyayehyjax.supabase.co/rest/v1/";
+const SB_KEY = "sb_publishable_GeXmZkRVtYCW_23v9dynpQ_cgpzSHdk";
+const HIST_MAX = 150;
+const hist = { st: new Map(), weeks: null, weeksReq: null };
+async function sb(path) {
+  const r = await fetch(SB + path, { headers: { apikey: SB_KEY, Accept: "application/json" } });
+  if (!r.ok) throw new Error("sb " + r.status);
+  return r.json();
+}
+function loadWeeks() {
+  if (!hist.weeksReq) hist.weeksReq = (async () => {
+    const k = "plein:weeks:" + dayKey();
+    let rows = null;
+    try { rows = JSON.parse(sessionStorage.getItem(k)); } catch (e) {}
+    if (!Array.isArray(rows)) {
+      rows = await sb("france_kpi?select=semaine&order=semaine.desc&limit=12");
+      try { sessionStorage.setItem(k, JSON.stringify(rows)); } catch (e) {}
+    }
+    hist.weeks = rows.map(r => r.semaine).reverse();
+  })().catch(e => { hist.weeksReq = null; throw e; });
+  return hist.weeksReq;
+}
+async function loadHist() {
+  const ids = state.stations.slice().sort((a, b) => a.dist - b.dist).slice(0, HIST_MAX).map(s => s.id).filter(id => /^\d+$/.test(id) && !hist.st.has(id));
+  try {
+    await loadWeeks();
+    if (ids.length) {
+      const rows = await sb("station_kpi?select=station_id,h&station_id=in.(" + ids.join(",") + ")");
+      ids.forEach(id => hist.st.set(id, null));
+      rows.forEach(r => hist.st.set(String(r.station_id), r.h));
+    }
+    if (!state.loading) render();
+  } catch (e) { /* l'historique est un plus : sans lui, la page reste complète */ }
+}
+function shortDate(d) {
+  try { return new Intl.DateTimeFormat("fr-FR", { timeZone: "UTC", day: "numeric", month: "short" }).format(new Date(d + "T00:00:00Z")).replace(/\.$/, ""); }
+  catch (e) { return d; }
+}
+function trendOf(s, fuel, live) {
+  const h = hist.st.get(s.id), w = hist.weeks;
+  if (!h || !w || !Array.isArray(h[fuel])) return null;
+  const arr = h[fuel], off = w.length - arr.length, pts = [];
+  arr.forEach((v, i) => { if (v != null && w[i + off]) pts.push({ d: w[i + off], p: v / 1000 }); });
+  if (!pts.length) return null;
+  const today = Date.parse(dayKey());
+  const age = d => Math.round((today - Date.parse(d)) / 864e5);
+  let ref = null;
+  for (let i = pts.length - 1; i >= 0; i--) if (age(pts[i].d) >= 4) { ref = pts[i]; break; }
+  const series = pts.map(x => x.p);
+  if (live != null) series.push(live);
+  const delta = ref && live != null ? live - ref.p : null;
+  const long = pts.length >= 3 && live != null && pts[0] !== ref ? { d: pts[0].d, delta: live - pts[0].p } : null;
+  return { pts, ref, delta, long, series, dir: delta == null || Math.abs(delta) < 0.0005 ? 0 : (delta > 0 ? 1 : -1) };
+}
+function sparkHTML(series, dir) {
+  if (series.length < 2) return "";
+  const W = 120, Hh = 30, pad = 4;
+  const lo = Math.min(...series), hi = Math.max(...series), span = hi - lo || 1;
+  const xy = series.map((v, i) => [pad + i * (W - 2 * pad) / (series.length - 1), hi === lo ? Hh / 2 : pad + (hi - v) * (Hh - 2 * pad) / span]);
+  const last = xy[xy.length - 1];
+  return '<svg class="spark ' + (dir > 0 ? "up" : dir < 0 ? "down" : "") + '" viewBox="0 0 ' + W + " " + Hh + '" width="' + W + '" height="' + Hh + '" aria-hidden="true">' +
+    '<polyline fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" points="' + xy.map(p => p[0].toFixed(1) + "," + p[1].toFixed(1)).join(" ") + '"/>' +
+    '<circle cx="' + last[0].toFixed(1) + '" cy="' + last[1].toFixed(1) + '" r="3" fill="currentColor"/></svg>';
+}
+function histHTML(s, fuel, live) {
+  const t = trendOf(s, fuel, live);
+  if (!t) return "";
+  let txt;
+  if (!t.ref) txt = "Suivi des prix commencé le " + esc(shortDate(t.pts[0].d)) + ". L'évolution s'affichera après le prochain relevé, lundi.";
+  else {
+    txt = t.dir === 0 ? "Prix stable depuis le " + esc(shortDate(t.ref.d)) + "."
+      : '<b class="' + (t.dir > 0 ? "minus" : "plus") + '">' + (t.dir > 0 ? "En hausse" : "En baisse") + " de " + fmtPrice(Math.abs(t.delta)) + " €</b> depuis le " + esc(shortDate(t.ref.d)) + ".";
+    if (t.long && Math.abs(t.long.delta) >= 0.0005) txt += " " + (t.long.delta > 0 ? "+" : "−") + fmtPrice(Math.abs(t.long.delta)) + " € depuis le " + esc(shortDate(t.long.d)) + ".";
+  }
+  return '<div class="histo">' + (t.ref ? sparkHTML(t.series, t.dir) : "") + "<p>" + txt + "</p></div>";
 }
 
 /* ---------- Classement France ---------- */
