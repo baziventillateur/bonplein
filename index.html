@@ -446,7 +446,7 @@ dialog.center[open]{animation:pop .35s cubic-bezier(.2,1.4,.4,1)}
 <footer class="wrap">
   <p>Prix, ruptures et horaires : flux instantané « Prix des carburants en France » du ministère de l'Économie (prix-carburants.gouv.fr), actualisé toutes les 10 minutes. Adresses : Géoplateforme IGN.</p>
   <p>Ouvert ou fermé est calculé à partir des horaires déclarés par chaque station. Les ruptures sont déclarées par les stations elles-mêmes. L'évolution des prix vient d'un relevé fait chaque lundi. Votre progression (XP, badges, économies) reste sur cet appareil. Si vous créez un compte, votre e-mail, votre progression, vos réglages et vos stations favorites sont enregistrés chez Supabase, dans l'Union européenne ; vous pouvez tout supprimer depuis « Ma progression ».</p>
-  <p class="ver" id="ver">v1.101 du 15/11/2026 à 20h17</p>
+  <p class="ver" id="ver">v1.102 du 15/11/2026 à 21h17</p>
 </footer>
 
 <div id="toast" role="status" aria-live="polite" hidden></div>
@@ -1901,7 +1901,7 @@ function renderAccount() {
   const err = acct.error ? '<p class="acct-err">' + esc(acct.error) + "</p>" : "";
   if (!acct.user) {
     el.innerHTML = acct.sent
-      ? "<h3>Vérifiez votre boîte mail</h3><p>Un lien de connexion a été envoyé à <b>" + esc(acct.sent) + '</b>. Ouvrez-le sur cet appareil : vous reviendrez ici, connecté.</p><button type="button" class="linkbtn" data-act="acctagain">Utiliser une autre adresse</button>'
+      ? "<h3>Vérifiez votre boîte mail</h3><p>Un lien de connexion a été envoyé à <b>" + esc(acct.sent) + '</b>. Ouvrez-le sur cet appareil : vous reviendrez ici, connecté.</p><p class="muted">Rien reçu après une minute ? Regardez dans les spams et l'onglet Promotions. L'e-mail vient de bonplein@paceapp.fr ; le lien reste valable une heure.</p><button type="button" class="linkbtn" data-act="acctagain">Utiliser une autre adresse</button>'
       : "<h3>Gardez votre progression</h3>" +
         '<ul class="acct-why"><li>XP, badges et économies conservés si vous changez de téléphone</li><li>Vos stations favorites, retrouvées partout</li><li>Le point du lundi par e-mail : le meilleur prix près de chez vous</li></ul>' +
         '<form id="acctForm" class="acct-form"><label class="sr" for="acctMail">Adresse e-mail</label>' +
