@@ -292,6 +292,8 @@ main{padding:0 10px 24px}
 .r-info{min-width:0;display:flex;flex-direction:column}
 .r-addr{font-weight:600;font-size:.9375rem;line-height:1.25;overflow-wrap:anywhere}
 .r-meta{color:var(--muted);font-size:.8125rem}
+.r-brand{display:inline-block;max-width:11em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:.35rem;padding:0 .3rem;border:1px solid var(--muted);border-radius:4px;font-size:.6875rem;font-weight:700;line-height:1.5;vertical-align:1px;color:#1D2731;background:#fff}
+.totem .addr .r-brand.t{display:table;margin:0 0 3px;border-color:#F4C542;background:transparent;color:#F4C542;font-size:.75rem;font-weight:700}
 .stale{color:var(--rouge);font-weight:600}
 
 .row-detail{padding:0 12px 10px 88px}
@@ -473,7 +475,7 @@ dialog.center[open]{animation:pop .35s cubic-bezier(.2,1.4,.4,1)}
   <p>Bonplein n’est pas un service de l’État. Prix, ruptures et horaires : flux instantané « Prix des carburants en France » du ministère de l'Économie (prix-carburants.gouv.fr), actualisé toutes les 10 minutes. Adresses : Géoplateforme IGN.</p>
   <p>Ouvert ou fermé est calculé à partir des horaires déclarés par chaque station. Les ruptures sont déclarées par les stations elles-mêmes. L'évolution des prix vient d'un relevé fait chaque lundi. Votre progression (XP, badges, économies) reste sur cet appareil. Si vous créez un compte, votre e-mail, votre progression, vos réglages et vos stations favorites sont enregistrés chez Supabase, dans l'Union européenne ; vous pouvez tout supprimer depuis « Ma progression ».</p>
   <p><a href="confidentialite.html">Confidentialité</a><span aria-hidden="true"> | </span><a href="conditions.html">Conditions d’utilisation</a><span aria-hidden="true"> | </span><a href="conditions.html#mentions">Mentions légales</a></p>
-  <p class="ver" id="ver">v1.110 du 15/11/2026 à 23h28</p>
+  <p class="ver" id="ver">v1.111 du 17/11/2026 à 01h12</p>
 </footer>
 
 <div id="toast" role="status" aria-live="polite" hidden></div>
@@ -547,6 +549,7 @@ const FUELS = [
   { key: "gplc",   title: "GPL",             label: "LPG", shape: "diamond", du: "du GPL",             aliases: ["gplc", "gpl", "lpg"] }
 ];
 const FUEL = Object.fromEntries(FUELS.map(f => [f.key, f]));
+const brands = new Map(); /* enseignes (OpenStreetMap), par identifiant de station */
 
 /* ---------- Mémoire locale (facultative) ---------- */
 const store = {
@@ -875,6 +878,7 @@ async function load() {
     state.fetchedAt = new Date();
     setTimeout(onLoaded, 0);
     loadHist();
+    loadBrands();
   } catch (e) {
     if (my !== reqId) return;
     state.error = e;
@@ -1021,7 +1025,7 @@ function renderResults() {
     html += '<section class="totem" aria-labelledby="bestTitle"><div class="totem-grid">' +
       '<h2 id="bestTitle">' + esc(F.title) + " le moins cher, à " + fmtDist(b.s.dist) + "</h2>" +
       '<div class="price" aria-label="' + esc(fmtPrice(b.f.price)) + ' euros le litre">' + priceHTML(b.f.price) + '<span class="unit">€/L</span></div>' +
-      '<p class="addr">' + esc(b.s.adresse) + "<span>" + esc((b.s.cp + " " + b.s.ville).trim()) + (b.s.autoroute ? ", sur autoroute" : "") + "</span></p>" +
+      '<p class="addr">' + brandHTML(b.s.id, "t") + esc(b.s.adresse) + "<span>" + esc((b.s.cp + " " + b.s.ville).trim()) + (b.s.autoroute ? ", sur autoroute" : "") + "</span></p>" +
       "</div>" +
       '<div class="meta"><span class="st ' + b.open.state + '">' + esc(b.open.text) + "</span><span>Prix déclaré " + esc(ago(b.f.maj)) + "</span></div>" +
       (L > 0 && c.count > 1 && saveAvg > 0.005
@@ -1063,7 +1067,7 @@ function renderResults() {
       "</ul></details>";
   }
 
-  html += '<div class="fetched">Données récupérées à ' + fmtHM(parisNow(state.fetchedAt).min) + ' <button type="button" data-act="refresh">Actualiser</button></div>';
+  html += '<div class="fetched">Données récupérées à ' + fmtHM(parisNow(state.fetchedAt).min) + ' <button type="button" data-act="refresh">Actualiser</button>' + ([...brands.values()].some(Boolean) ? '<br><small>Enseignes : © contributeurs OpenStreetMap</small>' : "") + "</div>";
   el.innerHTML = html;
   if (state.view === "map" && c.list.length) showMap(c);
 }
@@ -1105,7 +1109,7 @@ async function showMap(c) {
     slot.classList.remove("loading-map");
     if (!document.body.contains(mapS.el)) return;
     mapS.map = L.map(mapS.el, { zoomControl: true, attributionControl: true });
-    L.tileLayer(IGN_TILES, { minZoom: 6, maxZoom: 19, attribution: "© IGN" }).addTo(mapS.map);
+    L.tileLayer(IGN_TILES, { minZoom: 6, maxZoom: 19, attribution: "© IGN, enseignes © OpenStreetMap" }).addTo(mapS.map);
     mapS.map.attributionControl.setPrefix("");
     mapS.layer = L.layerGroup().addTo(mapS.map);
   }
@@ -1141,7 +1145,7 @@ function popupHTML(id) {
   if (!r || !c) return "";
   const delta = r.f.price - c.min;
   return '<div class="pop"><p class="pop-p">' + priceHTML(r.f.price) + ' <span class="unit">€/L</span></p>' +
-    '<p class="pop-a"><b>' + esc(r.s.adresse) + "</b><br>" + esc(r.s.cityName) + ", " + fmtDist(r.s.dist) + "</p>" +
+    '<p class="pop-a"><b>' + brandHTML(r.s.id) + esc(r.s.adresse) + "</b><br>" + esc(r.s.cityName) + ", " + fmtDist(r.s.dist) + "</p>" +
     '<p class="pop-m"><span class="st ' + r.open.state + '">' + esc(r.open.text) + "</span> " + (delta < 0.0005 ? "Meilleur prix" : "+" + fmtPrice(delta) + " € par rapport à la moins chère") + "</p>" +
     linksHTML(r.s) +
     '<button type="button" class="linkbtn" data-maprow="' + esc(id) + '">Voir le détail dans la liste</button></div>';
@@ -1188,7 +1192,7 @@ function rowHTML(r, c, F) {
   let h = '<li><button type="button" class="row-main" data-row="' + esc(s.id) + '" aria-expanded="' + open + '" aria-controls="' + did + '">' +
     '<span class="r-price"><span class="r-rank">' + medalHTML(r.rank, c.count) + (state.sort === "dist" ? fmtDist(s.dist) : (r.rank <= 3 && c.count >= 3 ? "" : "n° " + r.rank)) + '</span><span class="p">' + priceHTML(r.f.price) + '</span><span class="gauge" aria-hidden="true"><i style="left:' + (pos * 100).toFixed(1) + '%"></i></span>' +
     '<span class="r-delta' + (delta < 0.0005 ? " best" : "") + '">' + (delta < 0.0005 ? "Meilleur prix" : "+" + fmtPrice(delta) + " €") + "</span></span>" +
-    '<span class="r-info"><span class="r-addr">' + (isFav(s.id) ? '<span class="favstar" aria-label="Station favorite">★ </span>' : "") + esc(s.adresse) + "</span>" +
+    '<span class="r-info"><span class="r-addr">' + (isFav(s.id) ? '<span class="favstar" aria-label="Station favorite">★ </span>' : "") + brandHTML(s.id) + esc(s.adresse) + "</span>" +
     '<span class="r-meta">' + esc(s.cityName) + (state.sort === "dist" ? "" : ", " + fmtDist(s.dist)) + (s.autoroute ? ", autoroute" : "") + (r.stale ? ', <span class="stale">prix ' + esc(ago(r.f.maj)) + "</span>" : "") + trendTag(s, r.f.price) + "</span>" +
     '<span class="st ' + r.open.state + '">' + esc(r.open.text) + "</span></span>" +
     "</button>";
@@ -1596,6 +1600,20 @@ async function loadHist() {
     }
     if (!state.loading) render();
   } catch (e) { /* l'historique est un plus : sans lui, la page reste complète */ }
+}
+async function loadBrands() {
+  const ids = state.stations.slice().sort((a, b) => a.dist - b.dist).slice(0, HIST_MAX).map(s => s.id).filter(id => /^\d+$/.test(id) && !brands.has(id));
+  if (!ids.length) return;
+  try {
+    const rows = await sb("enseigne?select=station_id,enseigne&station_id=in.(" + ids.join(",") + ")");
+    ids.forEach(id => brands.set(id, null));
+    rows.forEach(r => brands.set(String(r.station_id), r.enseigne));
+    if (!state.loading) render();
+  } catch (e) { /* l'enseigne est un plus : sans elle, la liste reste complète */ }
+}
+function brandHTML(id, v) {
+  const b = brands.get(String(id));
+  return b ? '<span class="r-brand' + (v ? " " + v : "") + '">' + esc(b) + "</span>" : "";
 }
 function shortDate(d) {
   try { return new Intl.DateTimeFormat("fr-FR", { timeZone: "UTC", day: "numeric", month: "short" }).format(new Date(d + "T00:00:00Z")).replace(/\.$/, ""); }
