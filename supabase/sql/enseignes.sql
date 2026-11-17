@@ -179,3 +179,29 @@ revoke all on function private.enseigne_zone_apparier(text, jsonb) from public;
 revoke all on function private.enseigne_tick() from public;
 
 select cron.schedule('enseignes', '* * * * *', 'select private.enseigne_tick()');
+
+-- Ménage quotidien (migration menage_historique_taches) : historique des tâches planifiées
+-- (7 jours pour 'enseignes', 60 jours pour les autres) et passage de l'import à toutes les
+-- 5 minutes une fois le premier tour terminé (ou au plus tard 1 jour après les positions).
+create or replace function private.cron_menage() returns text
+language plpgsql set search_path = public, private, pg_temp as $$
+declare v_suppr integer; v_reste integer; v_ralenti boolean := false;
+begin
+  delete from cron.job_run_details d using cron.job j
+   where d.jobid = j.jobid
+     and d.end_time < now() - case when j.jobname = 'enseignes' then interval '7 days' else interval '60 days' end;
+  get diagnostics v_suppr = row_count;
+  select count(*) into v_reste from private.enseigne_job z
+   where z.id <> 'positions' and z.fait_le is null
+     and exists (select 1 from private.station_pos p where p.lat >= z.s and p.lat < z.n and p.lon >= z.w and p.lon < z.e);
+  if exists (select 1 from cron.job where jobname = 'enseignes' and schedule = '* * * * *')
+     and exists (select 1 from private.enseigne_job where id = 'positions' and fait_le is not null)
+     and (v_reste = 0 or (select fait_le from private.enseigne_job where id = 'positions') < now() - interval '1 day') then
+    perform cron.schedule('enseignes', '*/5 * * * *', 'select private.enseigne_tick()');
+    v_ralenti := true;
+  end if;
+  return v_suppr || ' lignes d''historique supprimées, ' || v_reste || ' zones restantes'
+         || case when v_ralenti then ', import passé à toutes les 5 minutes' else '' end;
+end $$;
+revoke all on function private.cron_menage() from public;
+select cron.schedule('menage-taches', '43 3 * * *', 'select private.cron_menage()');
